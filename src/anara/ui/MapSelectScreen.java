@@ -17,17 +17,15 @@ public class MapSelectScreen extends BasePanel {
     };
 
     private static final String[] MAP_DESC = {
-        "Kalahkan 5 prajurit monster + Mini Boss\nyang diturunkan oleh Final Boss.",
-        "Bertahan 15 detik dari serangan massal\nprajurit + Mini Boss Final Boss.",
-        "Hadapi 2 Mini Boss secara bersamaan\nyang dikerahkan oleh Final Boss.",
-        "FINAL BATTLE — Hadapi Final Boss\ndengan segala kekuatanmu!"
+        "Kalahkan 5 prajurit monster + Mini Boss\nyang diturunkan oleh Final Boss.", "Bertahan 15 detik dari serangan massal\nprajurit + Mini Boss Final Boss.",
+        "Hadapi 2 Mini Boss secara bersamaan\nyang dikerahkan oleh Final Boss.", "FINAL BATTLE — Hadapi Final Boss\ndengan segala kekuatanmu!"
     };
 
     private static final Color[] MAP_COLORS = {
-        new Color(60, 120, 60),
-        new Color(120, 100, 40),
-        new Color(120, 60, 40),
-        new Color(120, 20, 20)
+        new Color(30, 80, 30),
+        new Color(90, 70, 15),
+        new Color(70, 25, 80),
+        new Color(110, 15, 15)
     };
 
     public MapSelectScreen() {

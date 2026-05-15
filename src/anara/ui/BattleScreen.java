@@ -21,7 +21,9 @@ public class BattleScreen extends BasePanel {
     private static final int MAP_W = 900, MAP_H = 580;
 
     // ===== Game State =====
-    private enum State { PLAYING, WIN, LOSE }
+    private enum State {
+        PLAYING, WIN, LOSE
+    }
     private State state = State.PLAYING;
 
     // ===== Entities =====
@@ -34,6 +36,11 @@ public class BattleScreen extends BasePanel {
     private int survivalTicks = 0;
     private static final int SURVIVAL_TARGET = 15 * 60; // 15 sec * 60 fps
     private int spawnCooldown = 0;
+
+    // ===== MAP 3 =====
+    private Rectangle finishArea;
+    private boolean miniBossSpawned = false;
+    private boolean reachedFinish = false;
 
     // ===== Input =====
     private boolean keyUp, keyDown, keyLeft, keyRight;
@@ -53,7 +60,9 @@ public class BattleScreen extends BasePanel {
         setupInput();
     }
 
-    public void setMapId(int id) { this.mapId = id; }
+    public void setMapId(int id) {
+        this.mapId = id;
+    }
 
     public void startBattle() {
         state = State.PLAYING;
@@ -81,7 +90,7 @@ public class BattleScreen extends BasePanel {
             case 1:
                 // 5 soldiers + 1 mini boss
                 spawnSoldiers(5, 1);
-               // spawnMiniBosses(1);
+                // spawnMiniBosses(1);
                 break;
             case 2:
                 // Endless spawn, survival 15 sec
@@ -90,10 +99,16 @@ public class BattleScreen extends BasePanel {
                 showNotif("BERTAHAN 15 DETIK!", 150);
                 break;
             case 3:
-                // 2 mini bosses simultaneously
-                spawnMiniBosses(2);
-                showNotif("KALAHKAN 2 MINI BOSS!", 150);
+                // Spawn monster sepanjang jalan
+                spawnSoldiers(8, 1);
+
+                // Finish area di ujung map
+                finishArea = new Rectangle(MAP_W - 120, MAP_H / 2 - 60, 80, 120);
+                miniBossSpawned = false;
+                reachedFinish = false;
+                showNotif("CAPAI GARIS AKHIR!", 150);
                 break;
+
             case 4:
                 // Final Boss
                 finalBoss = new FinalBoss(MAP_W / 2f, 100);
@@ -107,7 +122,9 @@ public class BattleScreen extends BasePanel {
             float sx = 50 + new Random().nextFloat() * (MAP_W - 100);
             float sy = 50 + new Random().nextFloat() * (MAP_H - 100);
             // Keep away from player
-            if (Math.abs(sx - MAP_W / 2f) < 100) sx += 150;
+            if (Math.abs(sx - MAP_W / 2f) < 100) {
+                sx += 150;
+            }
             soldiers.add(new Soldier(sx, sy, tier));
         }
     }
@@ -124,32 +141,67 @@ public class BattleScreen extends BasePanel {
     // GAME LOOP TICK
     // ===========================
     private void tick() {
-        if (state != State.PLAYING) return;
+        if (state != State.PLAYING) {
+            return;
+        }
         gameTick++;
-        
+
         // Player movement
         float spd = 3.5f;
-        player.dx = 0; 
+        player.dx = 0;
         player.dy = 0;
-        if (keyUp) player.dy -= 1;
-        if (keyDown) player.dy += 1;
-        if (keyLeft) player.dx -= 1;
-        if (keyRight) player.dx += 1;
-        
-        float len = (float)Math.sqrt(player.dx * player.dx + player.dy * player.dy);
+        if (keyUp) {
+            player.dy -= 1;
+        }
+        if (keyDown) {
+            player.dy += 1;
+        }
+        if (keyLeft) {
+            player.dx -= 1;
+        }
+        if (keyRight) {
+            player.dx += 1;
+        }
+
+        float len = (float) Math.sqrt(player.dx * player.dx + player.dy * player.dy);
         // supaya normalize tidak lebih cepat
-        
-if (len > 0) {
-    player.dx = (player.dx / len) * spd;
-    player.dy = (player.dy / len) * spd;
-}
+
+        if (len > 0) {
+            player.dx = (player.dx / len) * spd;
+            player.dy = (player.dy / len) * spd;
+        }
 
         player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
+        // ===== MAP 3 FINISH CHECK =====
+        if (mapId == 3 && !miniBossSpawned) {
+
+            if (finishArea.contains(player.getX(), player.getY())) {
+
+                reachedFinish = true;
+                miniBossSpawned = true;
+
+                soldiers.clear();
+
+                spawnMiniBosses(1);
+
+                showNotif("MINI BOSS MUNCUL!", 180);
+            }
+        }
 
         // Update enemies
-        for (Soldier s : soldiers) { if (s.isAlive()) s.update(player.getX(), player.getY(), MAP_W, MAP_H); }
-        for (MiniBoss mb : miniBosses) { if (mb.isAlive()) mb.update(player.getX(), player.getY(), MAP_W, MAP_H); }
-        if (finalBoss != null && finalBoss.isAlive()) finalBoss.update(player.getX(), player.getY(), MAP_W, MAP_H);
+        for (Soldier s : soldiers) {
+            if (s.isAlive()) {
+                s.update(player.getX(), player.getY(), MAP_W, MAP_H);
+            }
+        }
+        for (MiniBoss mb : miniBosses) {
+            if (mb.isAlive()) {
+                mb.update(player.getX(), player.getY(), MAP_W, MAP_H);
+            }
+        }
+        if (finalBoss != null && finalBoss.isAlive()) {
+            finalBoss.update(player.getX(), player.getY(), MAP_W, MAP_H);
+        }
 
         // Enemy attacks player
         for (Soldier s : soldiers) {
@@ -193,10 +245,14 @@ if (len > 0) {
 
         // Update damage texts
         damageTexts.removeIf(d -> d.life <= 0);
-        for (DamageText d : damageTexts) d.update();
+        for (DamageText d : damageTexts) {
+            d.update();
+        }
 
         // Notif timer
-        if (notifTimer > 0) notifTimer--;
+        if (notifTimer > 0) {
+            notifTimer--;
+        }
 
         // Win/Lose check
         checkWinLose();
@@ -205,49 +261,62 @@ if (len > 0) {
     }
 
     private void checkWinLose() {
-        if (!player.isAlive()) { endBattle(false); return; }
+        if (!player.isAlive()) {
+            endBattle(false);
+            return;
+        }
 
         switch (mapId) {
-            
-            case 1 :
-            //semua soldier mati -> spawn mini boss
-            if (soldiers.stream().noneMatch(s -> s.isAlive()) && miniBosses.isEmpty()) {
 
-                spawnMiniBosses(1);
+            case 1:
+                //semua soldier mati -> spawn mini boss
+                if (soldiers.stream().noneMatch(s -> s.isAlive()) && miniBosses.isEmpty()) {
+
+                    spawnMiniBosses(1);
 //                showNotif("MINI BOSS MUNCUL!", 120);
-            }
+                }
 
-            // menang kalau mini boss mati
-            boolean bossDead = miniBosses.stream().noneMatch(mb -> mb.isAlive());
+                // menang kalau mini boss mati
+                boolean bossDead = miniBosses.stream().noneMatch(mb -> mb.isAlive());
 
-            if (!miniBosses.isEmpty() && bossDead) {
-                endBattle(true);
-            }
+                if (!miniBosses.isEmpty() && bossDead) {
+                    endBattle(true);
+                }
 
-            break;
-            
+                break;
+
 //            case 1:
 //                boolean allDead = soldiers.stream().noneMatch(s -> s.isAlive())
 //                               && miniBosses.stream().noneMatch(mb -> mb.isAlive());
 //                if (allDead) endBattle(true);
 //                break;
-case 2:
-            
-                if (survivalTicks >= SURVIVAL_TARGET) endBattle(true);
+            case 2:
+
+                if (survivalTicks >= SURVIVAL_TARGET) {
+                    endBattle(true);
+                }
                 break;
             case 3:
-                if (miniBosses.stream().noneMatch(mb -> mb.isAlive())) endBattle(true);
+
+                if (miniBossSpawned
+                        && miniBosses.stream().noneMatch(mb -> mb.isAlive())) {
+
+                    endBattle(true);
+                }
                 break;
             case 4:
-                if (finalBoss != null && !finalBoss.isAlive()) endBattle(true);
+                if (finalBoss != null && !finalBoss.isAlive()) {
+                    endBattle(true);
+                }
                 break;
         }
     }
-    
 
     private void endBattle(boolean won) {
         state = won ? State.WIN : State.LOSE;
-        if (gameLoop != null) gameLoop.stop();
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
 
         // Reward gold on win
         if (won) {
@@ -261,8 +330,12 @@ case 2:
 
     // ===== Attack (mouse click) =====
     private void doPlayerAttack() {
-        if (!player.isAlive() || state != State.PLAYING) return;
-        if (!player.canAttack()) return;
+        if (!player.isAlive() || state != State.PLAYING) {
+            return;
+        }
+        if (!player.canAttack()) {
+            return;
+        }
         int dmg = player.doAttack();
         float px = player.getX(), py = player.getY();
 
@@ -270,40 +343,43 @@ case 2:
         float range = 45f;//range attack lebih kecil
         for (Soldier s : soldiers) {
 
-    if (s.isAlive() && dist(px, py, s.getX(), s.getY()) < range) {
+            if (s.isAlive() && dist(px, py, s.getX(), s.getY()) < range) {
 
-        s.takeDamage(dmg);
+                s.takeDamage(dmg);
 
-        spawnDamageText(
-            s.getX(),
-            s.getY() - 20,
-            dmg,
-            COL_GOLD
-        );
-    }
-}
+                spawnDamageText(
+                        s.getX(),
+                        s.getY() - 20,
+                        dmg,
+                        COL_GOLD
+                );
+            }
+        }
 
-      for (MiniBoss mb : miniBosses) {
+        for (MiniBoss mb : miniBosses) {
 
-    if (mb.isAlive() && dist(px, py, mb.getX(), mb.getY()) < range) {
+            if (mb.isAlive() && dist(px, py, mb.getX(), mb.getY()) < range) {
 
-        mb.takeDamage(dmg);
+                mb.takeDamage(dmg);
 
-        spawnDamageText(
-            mb.getX(),
-            mb.getY() - 20,
-            dmg,
-            COL_GOLD
-        );
-    }
-}
+                spawnDamageText(
+                        mb.getX(),
+                        mb.getY() - 20,
+                        dmg,
+                        COL_GOLD
+                );
+            }
+        }
         if (finalBoss != null && finalBoss.isAlive() && dist(px, py, finalBoss.getX(), finalBoss.getY()) < range + 20) {
-            finalBoss.takeDamage(dmg); spawnDamageText(finalBoss.getX(), finalBoss.getY() - 40, dmg, COL_GOLD);
+            finalBoss.takeDamage(dmg);
+            spawnDamageText(finalBoss.getX(), finalBoss.getY() - 40, dmg, COL_GOLD);
         }
     }
 
     private void doPlayerSkill() {
-        if (!player.isAlive() || state != State.PLAYING || !player.canSkill()) return;
+        if (!player.isAlive() || state != State.PLAYING || !player.canSkill()) {
+            return;
+        }
         int dmg = player.doSkill();
         float px = player.getX(), py = player.getY();
         float range = 140f;
@@ -311,11 +387,18 @@ case 2:
 
         // AoE
         soldiers.stream().filter(s -> s.isAlive() && dist(px, py, s.getX(), s.getY()) < range)
-            .forEach(s -> { s.takeDamage(dmg); spawnDamageText(s.getX(), s.getY() - 20, dmg, COL_GOLD_LIGHT); });
+                .forEach(s -> {
+                    s.takeDamage(dmg);
+                    spawnDamageText(s.getX(), s.getY() - 20, dmg, COL_GOLD_LIGHT);
+                });
         miniBosses.stream().filter(m -> m.isAlive() && dist(px, py, m.getX(), m.getY()) < range)
-            .forEach(m -> { m.takeDamage(dmg / 2); spawnDamageText(m.getX(), m.getY() - 20, dmg / 2, COL_GOLD_LIGHT); });
+                .forEach(m -> {
+                    m.takeDamage(dmg / 2);
+                    spawnDamageText(m.getX(), m.getY() - 20, dmg / 2, COL_GOLD_LIGHT);
+                });
         if (finalBoss != null && finalBoss.isAlive() && dist(px, py, finalBoss.getX(), finalBoss.getY()) < range) {
-            finalBoss.takeDamage(dmg / 3); spawnDamageText(finalBoss.getX(), finalBoss.getY() - 40, dmg / 3, COL_GOLD_LIGHT);
+            finalBoss.takeDamage(dmg / 3);
+            spawnDamageText(finalBoss.getX(), finalBoss.getY() - 40, dmg / 3, COL_GOLD_LIGHT);
         }
     }
 
@@ -332,24 +415,67 @@ case 2:
 
         if (player != null) {
             // Draw entities (sorted by Y for depth)
-            for (Soldier s : soldiers) if (s.isAlive()) s.draw(g2);
-            for (MiniBoss mb : miniBosses) if (mb.isAlive()) mb.draw(g2);
-            if (finalBoss != null && finalBoss.isAlive()) finalBoss.draw(g2);
+            for (Soldier s : soldiers) {
+                if (s.isAlive()) {
+                    s.draw(g2);
+                }
+            }
+            for (MiniBoss mb : miniBosses) {
+                if (mb.isAlive()) {
+                    mb.draw(g2);
+                }
+            }
+            if (finalBoss != null && finalBoss.isAlive()) {
+                finalBoss.draw(g2);
+            }
             player.draw(g2);
         }
 
         // Damage texts
-        for (DamageText d : damageTexts) d.draw(g2);
+        for (DamageText d : damageTexts) {
+            d.draw(g2);
+        }
 
         // HUD
         drawHUD(g2);
 
         // Win/Lose overlay
-        if (state == State.WIN) drawEndOverlay(g2, true);
-        else if (state == State.LOSE) drawEndOverlay(g2, false);
+        if (state == State.WIN) {
+            drawEndOverlay(g2, true);
+        } else if (state == State.LOSE) {
+            drawEndOverlay(g2, false);
+        }
 
         // Notification
-        if (notifTimer > 0) drawNotif(g2);
+        if (notifTimer > 0) {
+            drawNotif(g2);
+        }
+        // ===== DRAW FINISH AREA =====
+if (mapId == 3 && !miniBossSpawned && finishArea != null) {
+
+    g2.setColor(new Color(255, 215, 0, 120));
+    g2.fillRect(
+        finishArea.x,
+        finishArea.y,
+        finishArea.width,
+        finishArea.height
+    );
+
+    g2.setColor(Color.YELLOW);
+    g2.drawRect(
+        finishArea.x,
+        finishArea.y,
+        finishArea.width,
+        finishArea.height
+    );
+
+    g2.setFont(new Font("Serif", Font.BOLD, 18));
+    g2.drawString(
+        "FINISH",
+        finishArea.x + 5,
+        finishArea.y - 10
+    );
+}
 
         g2.dispose();
     }
@@ -358,18 +484,30 @@ case 2:
         // Tilted dark ground
         Color groundColor;
         switch (mapId) {
-            case 1: groundColor = new Color(25, 35, 20); break;
-            case 2: groundColor = new Color(30, 20, 15); break;
-            case 3: groundColor = new Color(20, 15, 30); break;
-            default: groundColor = new Color(15, 10, 20); break;
+            case 1:
+                groundColor = new Color(25, 35, 20);
+                break;
+            case 2:
+                groundColor = new Color(30, 20, 15);
+                break;
+            case 3:
+                groundColor = new Color(20, 15, 30);
+                break;
+            default:
+                groundColor = new Color(15, 10, 20);
+                break;
         }
         g2.setColor(groundColor);
         g2.fillRect(0, 0, MAP_W, MAP_H);
 
         // Grid tiles
         g2.setColor(new Color(255, 255, 255, 10));
-        for (int x = 0; x < MAP_W; x += 60) g2.drawLine(x, 0, x, MAP_H);
-        for (int y = 0; y < MAP_H; y += 60) g2.drawLine(0, y, MAP_W, y);
+        for (int x = 0; x < MAP_W; x += 60) {
+            g2.drawLine(x, 0, x, MAP_H);
+        }
+        for (int y = 0; y < MAP_H; y += 60) {
+            g2.drawLine(0, y, MAP_W, y);
+        }
 
         // Border walls
         g2.setColor(new Color(60, 50, 30));
@@ -389,7 +527,9 @@ case 2:
     private void drawHUD(Graphics2D g2) {
         int hudY = MAP_H + 2;
         int hudH = getHeight() - MAP_H - 2;
-        if (hudH < 1) hudH = 65;
+        if (hudH < 1) {
+            hudH = 65;
+        }
 
         g2.setColor(new Color(8, 6, 14));
         g2.fillRect(0, MAP_H, MAP_W, hudH + 10);
@@ -397,7 +537,9 @@ case 2:
         g2.setStroke(new BasicStroke(1f));
         g2.drawLine(0, MAP_H, MAP_W, MAP_H);
 
-        if (player == null) return;
+        if (player == null) {
+            return;
+        }
 
         // Player HP
         g2.setFont(new Font("Serif", Font.BOLD, 11));
@@ -412,7 +554,7 @@ case 2:
         g2.setColor(new Color(20, 16, 8));
         g2.fillRect(40, MAP_H + 24, 80, 8);
         g2.setColor(COL_GOLD);
-        g2.fillRect(40, MAP_H + 24, (int)(80 * cdA / 100f), 8);
+        g2.fillRect(40, MAP_H + 24, (int) (80 * cdA / 100f), 8);
         g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
         g2.setColor(COL_TEXT_DIM);
         g2.drawString("[KLIK KIRI]", 125, MAP_H + 32);
@@ -425,7 +567,7 @@ case 2:
         g2.setColor(new Color(10, 10, 25));
         g2.fillRect(40, MAP_H + 40, 80, 8);
         g2.setColor(new Color(80, 120, 200));
-        g2.fillRect(40, MAP_H + 40, (int)(80 * cdS / 100f), 8);
+        g2.fillRect(40, MAP_H + 40, (int) (80 * cdS / 100f), 8);
         g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
         g2.setColor(COL_TEXT_DIM);
         g2.drawString("[KLIK KANAN]", 125, MAP_H + 48);
@@ -494,7 +636,7 @@ case 2:
     private void drawNotif(Graphics2D g2) {
         float alpha = Math.min(1f, notifTimer / 30f);
         g2.setFont(new Font("Serif", Font.BOLD, 20));
-        g2.setColor(new Color(220, 175, 60, (int)(alpha * 230)));
+        g2.setColor(new Color(220, 175, 60, (int) (alpha * 230)));
         int nx = MAP_W / 2 - g2.getFontMetrics().stringWidth(notifText) / 2;
         g2.drawString(notifText, nx, 80);
     }
@@ -507,40 +649,76 @@ case 2:
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_W: case KeyEvent.VK_UP: keyUp = true; break;
-                    case KeyEvent.VK_S: case KeyEvent.VK_DOWN: keyDown = true; break;
-                    case KeyEvent.VK_A: case KeyEvent.VK_LEFT: keyLeft = true; break;
-                    case KeyEvent.VK_D: case KeyEvent.VK_RIGHT: keyRight = true; break;
+                    case KeyEvent.VK_W:
+                    case KeyEvent.VK_UP:
+                        keyUp = true;
+                        break;
+                    case KeyEvent.VK_S:
+                    case KeyEvent.VK_DOWN:
+                        keyDown = true;
+                        break;
+                    case KeyEvent.VK_A:
+                    case KeyEvent.VK_LEFT:
+                        keyLeft = true;
+                        break;
+                    case KeyEvent.VK_D:
+                    case KeyEvent.VK_RIGHT:
+                        keyRight = true;
+                        break;
                     case KeyEvent.VK_ESCAPE:
-                        if (gameLoop != null) gameLoop.stop();
+                        if (gameLoop != null) {
+                            gameLoop.stop();
+                        }
                         GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAIN_MENU);
                         break;
                 }
             }
+
             @Override
             public void keyReleased(KeyEvent e) {
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_W: case KeyEvent.VK_UP: keyUp = false; break;
-                    case KeyEvent.VK_S: case KeyEvent.VK_DOWN: keyDown = false; break;
-                    case KeyEvent.VK_A: case KeyEvent.VK_LEFT: keyLeft = false; break;
-                    case KeyEvent.VK_D: case KeyEvent.VK_RIGHT: keyRight = false; break;
+                    case KeyEvent.VK_W:
+                    case KeyEvent.VK_UP:
+                        keyUp = false;
+                        break;
+                    case KeyEvent.VK_S:
+                    case KeyEvent.VK_DOWN:
+                        keyDown = false;
+                        break;
+                    case KeyEvent.VK_A:
+                    case KeyEvent.VK_LEFT:
+                        keyLeft = false;
+                        break;
+                    case KeyEvent.VK_D:
+                    case KeyEvent.VK_RIGHT:
+                        keyRight = false;
+                        break;
                 }
             }
         });
 
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
-            public void mouseMoved(MouseEvent e) { mousePos = e.getPoint(); }
+            public void mouseMoved(MouseEvent e) {
+                mousePos = e.getPoint();
+            }
+
             @Override
-            public void mouseDragged(MouseEvent e) { mousePos = e.getPoint(); }
+            public void mouseDragged(MouseEvent e) {
+                mousePos = e.getPoint();
+            }
         });
 
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (state == State.PLAYING) {
-                    if (e.getButton() == MouseEvent.BUTTON1) doPlayerAttack();
-                    if (e.getButton() == MouseEvent.BUTTON3) doPlayerSkill();
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        doPlayerAttack();
+                    }
+                    if (e.getButton() == MouseEvent.BUTTON3) {
+                        doPlayerSkill();
+                    }
                 } else {
                     handleEndClick(e.getX(), e.getY());
                 }
@@ -553,8 +731,11 @@ case 2:
         Rectangle btn1 = new Rectangle(cx - 180, cy + 30, 160, 40);
         Rectangle btn2 = new Rectangle(cx + 20, cy + 30, 160, 40);
         if (btn1.contains(mx, my)) {
-            if (state == State.WIN) GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAP_SELECT);
-            else startBattle(); // retry
+            if (state == State.WIN) {
+                GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAP_SELECT);
+            } else {
+                startBattle(); // retry
+            }
         } else if (btn2.contains(mx, my)) {
             GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAIN_MENU);
         }
@@ -581,21 +762,29 @@ case 2:
     // DAMAGE TEXT
     // ===========================
     static class DamageText {
+
         float x, y;
         int dmg, life = 45;
         Color color;
         float vy = -1.5f;
 
         DamageText(float x, float y, int dmg, Color color) {
-            this.x = x; this.y = y; this.dmg = dmg; this.color = color;
+            this.x = x;
+            this.y = y;
+            this.dmg = dmg;
+            this.color = color;
         }
 
-        void update() { y += vy; vy *= 0.95f; life--; }
+        void update() {
+            y += vy;
+            vy *= 0.95f;
+            life--;
+        }
 
         void draw(Graphics2D g2) {
             float alpha = Math.min(1f, life / 20f);
             g2.setFont(new Font("Serif", Font.BOLD, 14 + (life > 35 ? 4 : 0)));
-            g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), (int)(alpha * 255)));
+            g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (alpha * 255)));
             g2.drawString("-" + dmg, (int) x, (int) y);
         }
     }

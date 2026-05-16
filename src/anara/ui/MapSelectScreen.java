@@ -9,8 +9,11 @@ import java.awt.event.*;
 public class MapSelectScreen extends BasePanel {
     private int hoveredMap = -1;
     private int currentIndex = 0; // Melacak map yang sedang aktif di tengah (0 sampai 3)
-    private final Rectangle leftArrowRect = new Rectangle(5, 310, 30, 60);
-    private final Rectangle rightArrowRect = new Rectangle(865, 310, 30, 60);
+    private double animatedScroll = 0.0; // Menyimpan posisi scroll transisi desimal
+    private javax.swing.Timer animationTimer; // Timer penggerak animasi
+    
+    private final Rectangle leftArrowRect = new Rectangle(30, 290, 45, 55);
+    private final Rectangle rightArrowRect = new Rectangle(825, 290, 45, 55);
 
     private static final String[] MAP_NAMES = {
         "MAP I  — PASUKAN PENJAGA",
@@ -35,6 +38,24 @@ public class MapSelectScreen extends BasePanel {
 
     public MapSelectScreen() {
         setupMouseListeners();
+        setupAnimationTimer(); // Inisialisasi timer
+    }
+    
+    private void setupAnimationTimer() {
+        // Berjalan setiap 16 milidetik (setara ~60 FPS)
+        animationTimer = new javax.swing.Timer(16, e -> {
+            double diff = currentIndex - animatedScroll;
+            
+            // Jika jarak antara target dan posisi animasi masih jauh, geser perlahan
+            if (Math.abs(diff) > 0.001) {
+                animatedScroll += diff * 0.15; // 0.15 adalah kecepatan/kehalusan sliding
+                repaint();
+            } else {
+                animatedScroll = currentIndex;
+                animationTimer.stop(); // Hentikan timer jika sudah sampai tujuan
+                repaint();
+            }
+        });
     }
 
     private void setupMouseListeners() {
@@ -56,17 +77,17 @@ public class MapSelectScreen extends BasePanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Deteksi klik pada tombol panah Kiri
+                // Klik Panah Kiri
                 if (currentIndex > 0 && leftArrowRect.contains(e.getPoint())) {
                     currentIndex--;
-                    repaint();
+                    if (!animationTimer.isRunning()) animationTimer.start(); // Jalankan animasi
                     return;
                 }
                 
-                // Deteksi klik pada tombol panah Kanan
+                // Klik Panah Kanan
                 if (currentIndex < 3 && rightArrowRect.contains(e.getPoint())) {
                     currentIndex++;
-                    repaint();
+                    if (!animationTimer.isRunning()) animationTimer.start(); // Jalankan animasi
                     return;
                 }
 
@@ -88,19 +109,29 @@ public class MapSelectScreen extends BasePanel {
     }
 
     private Rectangle getMapRect(int i) {
-        int cardW = 260; // Ukuran lebar kartu vertikal
-        int cardH = 380; // Ukuran tinggi kartu vertikal
-        int gap = 20;    // Jarak antar kartu
+        int baseW = 260;
+        int baseH = 380;
+        int gap = 25; // Jarak antar kartu
         
-        // Menghitung titik tengah layar (Frame width = 900)
-        int centerX = 900 / 2 - cardW / 2; 
+        int centerX = 900 / 2 - baseW / 2; 
         int centerY = 150;
         
-        // Geser posisi X kartu berdasarkan selisih indeks dengan currentIndex
-        int offset = i - currentIndex;
-        int x = centerX + offset * (cardW + gap);
+        // Hitung selisih jarak dinamis berdasarkan animatedScroll
+        double offset = i - animatedScroll;
+        int slotX = (int) (centerX + offset * (baseW + gap));
         
-        return new Rectangle(x, centerY, cardW, cardH);
+        // EFEK ANIMASI ZOOM: Kartu mengecil 8% jika bergeser ke samping
+        double dist = Math.abs(offset);
+        double scale = 1.0 - Math.min(1.0, dist) * 0.08; 
+        
+        int cardW = (int) (baseW * scale);
+        int cardH = (int) (baseH * scale);
+        
+        // Penyesuaian koordinat XY agar kartu yang mengecil tetap presisi di tengah
+        int x = slotX + (baseW - cardW) / 2;
+        int y = centerY + (baseH - cardH) / 2;
+        
+        return new Rectangle(x, y, cardW, cardH);
     }
 
     private Rectangle getBackRect() {
@@ -131,14 +162,28 @@ public class MapSelectScreen extends BasePanel {
 
         // Gambar Navigasi Panah Kiri
         if (currentIndex > 0) {
+            g2.setColor(new Color(40, 35, 25, 220));
+            g2.fillRoundRect(leftArrowRect.x, leftArrowRect.y, leftArrowRect.width, leftArrowRect.height, 8, 8);
             g2.setColor(COL_GOLD_LIGHT);
-            g2.fillPolygon(new int[]{25, 10, 25}, new int[]{320, 340, 360}, 3);
+            g2.setStroke(new BasicStroke(2f));
+            g2.drawRoundRect(leftArrowRect.x, leftArrowRect.y, leftArrowRect.width, leftArrowRect.height, 8, 8);
+            
+            // Segitiga Panah Dalam Kotak
+            g2.fillPolygon(new int[]{leftArrowRect.x + 28, leftArrowRect.x + 15, leftArrowRect.x + 28}, 
+                           new int[]{leftArrowRect.y + 15, leftArrowRect.y + 27, leftArrowRect.y + 40}, 3);
         }
 
         // Gambar Navigasi Panah Kanan
         if (currentIndex < 3) {
+            g2.setColor(new Color(40, 35, 25, 220));
+            g2.fillRoundRect(rightArrowRect.x, rightArrowRect.y, rightArrowRect.width, rightArrowRect.height, 8, 8);
             g2.setColor(COL_GOLD_LIGHT);
-            g2.fillPolygon(new int[]{875, 890, 875}, new int[]{320, 340, 360}, 3);
+            g2.setStroke(new BasicStroke(2f));
+            g2.drawRoundRect(rightArrowRect.x, rightArrowRect.y, rightArrowRect.width, rightArrowRect.height, 8, 8);
+            
+            // Segitiga Panah Dalam Kotak
+            g2.fillPolygon(new int[]{rightArrowRect.x + 17, rightArrowRect.x + 30, rightArrowRect.x + 17}, 
+                           new int[]{rightArrowRect.y + 15, rightArrowRect.y + 27, rightArrowRect.y + 40}, 3);
         }
 
         // Gambar Indikator Titik Halaman (Page Indicator Dots)
@@ -162,76 +207,86 @@ public class MapSelectScreen extends BasePanel {
     private void drawMapCard(Graphics2D g2, int i) {
         Rectangle r = getMapRect(i);
         boolean hov = hoveredMap == i;
+        boolean isActive = (i == currentIndex);
 
-        // Background kartu
         Color baseColor = MAP_COLORS[i];
-        Color bgColor = new Color(
-            Math.min(255, baseColor.getRed() + (hov ? 15 : 0)),
-            Math.min(255, baseColor.getGreen() + (hov ? 15 : 0)),
-            Math.min(255, baseColor.getBlue() + (hov ? 15 : 0)),
-            hov ? 200 : 160
+        
+        // BIAR TIDAK POLOS: Gunakan warna dasar bertema (Bukan Hitam/Gelap Polos)
+        Color bgCard = new Color(
+            Math.max(15, baseColor.getRed() - 20),
+            Math.max(15, baseColor.getGreen() - 20),
+            Math.max(15, baseColor.getBlue() - 20),
+            245 // Opacity tinggi mendekati solid
         );
 
-        g2.setColor(new Color(10, 8, 15, 220));
-        g2.fillRoundRect(r.x, r.y, r.width, r.height, 12, 12);
+        g2.setColor(bgCard);
+        g2.fillRoundRect(r.x, r.y, r.width, r.height, 14, 14);
 
-        // Accent bar atas kartu
-        g2.setColor(bgColor);
-        g2.fillRoundRect(r.x, r.y, r.width, 8, 4, 4);
+        // Efek highlight semi-transparan saat mouse di-hover
+        if (hov) {
+            g2.setColor(new Color(255, 255, 255, 25));
+            g2.fillRoundRect(r.x, r.y, r.width, r.height, 14, 14);
+        }
 
-        // Border kartu (lebih terang jika di-hover atau sedang aktif di tengah)
-        boolean isActive = (i == currentIndex);
-        g2.setColor(isActive ? COL_GOLD_LIGHT : (hov ? baseColor.brighter() : new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 120)));
-        g2.setStroke(new BasicStroke(isActive ? 2.5f : (hov ? 2.0f : 1.0f)));
-        g2.drawRoundRect(r.x, r.y, r.width, r.height, 12, 12);
+        // Border tebal mewah ala Gambar 2
+        g2.setColor(isActive ? COL_GOLD_LIGHT : (hov ? Color.WHITE : new Color(255, 255, 255, 40)));
+        g2.setStroke(new BasicStroke(isActive ? 3.0f : (hov ? 2.0f : 1.5f)));
+        g2.drawRoundRect(r.x, r.y, r.width, r.height, 14, 14);
 
-        // Nomor Badge Map
-        g2.setColor(baseColor);
+        // TAMBAHAN BIAR TIDAK POLOS: Label Status di Kanan Atas Kartu
+        g2.setFont(new Font("SansSerif", Font.BOLD, 11));
+        g2.setColor(new Color(160, 255, 160));
+        g2.drawString("✓ TERBUKA", r.x + r.width - 95, r.y + 45);
+
+        // Nomor Bulat Map
+        g2.setColor(new Color(255, 255, 255, 50));
         g2.fillOval(r.x + 20, r.y + 25, 36, 36);
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Serif", Font.BOLD, 18));
-        g2.drawString(String.valueOf(i + 1), r.x + 32, r.y + 50);
+        String numStr = String.valueOf(i + 1);
+        int numW = g2.getFontMetrics().stringWidth(numStr);
+        g2.drawString(numStr, r.x + 20 + (36 - numW) / 2, r.y + 49);
 
         // Nama Map
         g2.setFont(new Font("Serif", Font.BOLD, 14));
-        g2.setColor(hov ? COL_GOLD_LIGHT : COL_TEXT);
-        g2.drawString(MAP_NAMES[i], r.x + 20, r.y + 90);
+        g2.setColor(Color.WHITE);
+        g2.drawString(MAP_NAMES[i], r.x + 20, r.y + 95);
 
         // Garis Pembatas (Divider)
-        g2.setColor(new Color(100, 80, 30, 100));
-        g2.drawLine(r.x + 20, r.y + 105, r.x + r.width - 20, r.y + 105);
+        g2.setColor(new Color(255, 255, 255, 60));
+        g2.drawLine(r.x + 20, r.y + 110, r.x + r.width - 20, r.y + 110);
 
-        // Deskripsi Map
+        // Deskripsi Teks (Putih Terang kontras tinggi)
         g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        g2.setColor(COL_TEXT_DIM);
+        g2.setColor(new Color(235, 235, 235));
         String[] lines = MAP_DESC[i].split("\n");
         for (int l = 0; l < lines.length; l++) {
-            g2.drawString(lines[l], r.x + 20, r.y + 135 + l * 20);
+            g2.drawString(lines[l], r.x + 20, r.y + 140 + l * 22);
         }
 
-        // Peringatan Boss Terakhir (Khusus Map IV)
+        // Peringatan Khusus Map IV
         if (i == 3) {
             g2.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 11));
-            g2.setColor(COL_RED_LIGHT);
-            g2.drawString("⚠ PERSIAPKAN DIRIMU!", r.x + 20, r.y + 230);
+            g2.setColor(new Color(255, 120, 120));
+            g2.drawString("⚠ AWAS! BOSS TERAKHIR", r.x + 20, r.y + 245);
         }
 
-        // Tingkat Kesulitan (Difficulty Dots)
-        g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        g2.setColor(COL_TEXT_DIM);
-        g2.drawString("KESULITAN", r.x + 20, r.y + r.height - 65);
+        // Tingkat Kesulitan (Difficulty Dots warna Emas)
+        g2.setFont(new Font("SansSerif", Font.BOLD, 10));
+        g2.setColor(new Color(210, 210, 210));
+        g2.drawString("KESULITAN", r.x + 20, r.y + r.height - 70);
         
         int dots = i + 1;
         for (int d = 0; d < 4; d++) {
-            g2.setColor(d < dots ? baseColor.brighter() : new Color(40, 35, 50));
-            g2.fillOval(r.x + 20 + d * 18, r.y + r.height - 55, 12, 12);
+            g2.setColor(d < dots ? new Color(255, 215, 0) : new Color(255, 255, 255, 45));
+            g2.fillOval(r.x + 20 + d * 18, r.y + r.height - 60, 12, 12);
         }
 
-        // Teks Petunjuk Klik di Bagian Bawah Kartu
-        g2.setFont(new Font("SansSerif", Font.ITALIC, 11));
-        g2.setColor(hov ? COL_GOLD_LIGHT : COL_TEXT_DIM);
-        String actionText = hov ? "▶ CLIK UNTUK MEMULAI" : "Klik untuk memilih";
+        // Teks Aksi Klik di Bagian Bawah Kartu
+        g2.setFont(new Font("SansSerif", Font.BOLD, 11));
+        g2.setColor(hov ? COL_GOLD_LIGHT : Color.WHITE);
+        String actionText = hov ? "▶ KLIK UNTUK MEMULAI" : "Klik untuk memilih";
         int textW = g2.getFontMetrics().stringWidth(actionText);
-        g2.drawString(actionText, r.x + (r.width - textW) / 2, r.y + r.height - 20);
+        g2.drawString(actionText, r.x + (r.width - textW) / 2, r.y + r.height - 25);
     }
 }

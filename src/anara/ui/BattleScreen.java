@@ -38,6 +38,9 @@ public class BattleScreen extends BasePanel {
     private int spawnCooldown = 0;
 
     // ===== MAP 3 =====
+    // World map lebih panjang dari layar
+    private static final int WORLD_W = 3000;
+    private int cameraX = 0;
     private Rectangle finishArea;
     private boolean miniBossSpawned = false;
     private boolean reachedFinish = false;
@@ -72,6 +75,7 @@ public class BattleScreen extends BasePanel {
         miniBosses.clear();
         finalBoss = null;
         damageTexts.clear();
+        miniBossSpawned = false;
 
         PlayerData pd = GameEngine.getInstance().getCurrentPlayer();
         player = new Player(MAP_W / 2f, MAP_H / 2f);
@@ -99,11 +103,14 @@ public class BattleScreen extends BasePanel {
                 showNotif("BERTAHAN 15 DETIK!", 150);
                 break;
             case 3:
+                player.setX(80);
+                player.setY(MAP_H / 2f);
+
                 // Spawn monster sepanjang jalan
-                spawnSoldiers(8, 1);
+                spawnSoldiers(3, 1);
 
                 // Finish area di ujung map
-                finishArea = new Rectangle(MAP_W - 120, MAP_H / 2 - 60, 80, 120);
+                finishArea = new Rectangle(WORLD_W - 120, MAP_H / 2 - 60, 80, 120);
                 miniBossSpawned = false;
                 reachedFinish = false;
                 showNotif("CAPAI GARIS AKHIR!", 150);
@@ -171,21 +178,50 @@ public class BattleScreen extends BasePanel {
             player.dy = (player.dy / len) * spd;
         }
 
-        player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
-        // ===== MAP 3 FINISH CHECK =====
-        if (mapId == 3 && !miniBossSpawned) {
+        player.update(mousePos.x, mousePos.y, WORLD_W, MAP_H);
+        // Kamera mengikuti player
+        cameraX = (int) (player.getX() - MAP_W / 2);
 
-            if (finishArea.contains(player.getX(), player.getY())) {
+// batas kamera
+        cameraX = Math.max(
+                0,
+                Math.min(cameraX, WORLD_W - MAP_W)
+        );
+        // MAP 3 : spawn musuh saat berjalan
+        if (mapId == 3) {
+            spawnCooldown--;
 
-                reachedFinish = true;
-                miniBossSpawned = true;
+            if (spawnCooldown <= 0) {
+                float x = player.getX() + 300;
 
-                soldiers.clear();
+                if (x < WORLD_W - 150) {
+                    soldiers.add(new Soldier(
+                            x,
+                            100 + new Random().nextInt(300),
+                            1
+                    ));
+                }
 
-                spawnMiniBosses(1);
-
-                showNotif("MINI BOSS MUNCUL!", 180);
+                spawnCooldown = 120; // tiap ±2 detik
             }
+
+            // Sampai finish → munculkan mini boss
+            if (player.getX() >= WORLD_W - 200 &&
+    !miniBossSpawned) {
+
+    miniBosses.clear();
+
+    miniBosses.add(
+        new MiniBoss(
+            WORLD_W - 100,
+            MAP_H / 2f
+        )
+    );
+
+    miniBossSpawned = true;
+
+    showNotif("MINI BOSS MUNCUL!", 120);
+}
         }
 
         // Update enemies
@@ -297,10 +333,11 @@ public class BattleScreen extends BasePanel {
                 }
                 break;
             case 3:
+                boolean miniBossDead
+                        = miniBosses.stream()
+                                .noneMatch(mb -> mb.isAlive());
 
-                if (miniBossSpawned
-                        && miniBosses.stream().noneMatch(mb -> mb.isAlive())) {
-
+                if (miniBossDead && player.getX() >= WORLD_W - 150) {
                     endBattle(true);
                 }
                 break;
@@ -411,23 +448,29 @@ public class BattleScreen extends BasePanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+//        drawBattleBackground(g2);
+        g2.translate(-cameraX, 0);
+
         drawBattleBackground(g2);
 
         if (player != null) {
-            // Draw entities (sorted by Y for depth)
+
             for (Soldier s : soldiers) {
                 if (s.isAlive()) {
                     s.draw(g2);
                 }
             }
+
             for (MiniBoss mb : miniBosses) {
                 if (mb.isAlive()) {
                     mb.draw(g2);
                 }
             }
+
             if (finalBoss != null && finalBoss.isAlive()) {
                 finalBoss.draw(g2);
             }
+
             player.draw(g2);
         }
 
@@ -435,8 +478,8 @@ public class BattleScreen extends BasePanel {
         for (DamageText d : damageTexts) {
             d.draw(g2);
         }
-
         // HUD
+        g2.translate(cameraX, 0);
         drawHUD(g2);
 
         // Win/Lose overlay
@@ -451,31 +494,32 @@ public class BattleScreen extends BasePanel {
             drawNotif(g2);
         }
         // ===== DRAW FINISH AREA =====
-if (mapId == 3 && !miniBossSpawned && finishArea != null) {
+        if (mapId == 3 && !miniBossSpawned && finishArea != null) {
 
-    g2.setColor(new Color(255, 215, 0, 120));
-    g2.fillRect(
-        finishArea.x,
-        finishArea.y,
-        finishArea.width,
-        finishArea.height
-    );
+            g2.setColor(new Color(255, 215, 0, 120));
+            g2.fillRect(
+                    finishArea.x,
+                    finishArea.y,
+                    finishArea.width,
+                    finishArea.height
+            );
 
-    g2.setColor(Color.YELLOW);
-    g2.drawRect(
-        finishArea.x,
-        finishArea.y,
-        finishArea.width,
-        finishArea.height
-    );
+            g2.setColor(Color.YELLOW);
+            g2.drawRect(
+                    finishArea.x,
+                    finishArea.y,
+                    finishArea.width,
+                    finishArea.height
+            );
 
-    g2.setFont(new Font("Serif", Font.BOLD, 18));
-    g2.drawString(
-        "FINISH",
-        finishArea.x + 5,
-        finishArea.y - 10
-    );
-}
+            g2.setFont(new Font("Serif", Font.BOLD, 18));
+            g2.drawString(
+                    "FINISH",
+                    finishArea.x + 5,
+                    finishArea.y - 10
+            );
+
+        }
 
         g2.dispose();
     }
@@ -498,15 +542,17 @@ if (mapId == 3 && !miniBossSpawned && finishArea != null) {
                 break;
         }
         g2.setColor(groundColor);
-        g2.fillRect(0, 0, MAP_W, MAP_H);
+        g2.fillRect(0, 0, WORLD_W, MAP_H);
 
-        // Grid tiles
+// Grid tiles
         g2.setColor(new Color(255, 255, 255, 10));
-        for (int x = 0; x < MAP_W; x += 60) {
+
+        for (int x = 0; x < WORLD_W; x += 60) {
             g2.drawLine(x, 0, x, MAP_H);
         }
+
         for (int y = 0; y < MAP_H; y += 60) {
-            g2.drawLine(0, y, MAP_W, y);
+            g2.drawLine(0, y, WORLD_W, y);
         }
 
         // Border walls

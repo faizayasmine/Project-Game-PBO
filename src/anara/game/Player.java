@@ -21,6 +21,22 @@ public class Player extends Entity{
         attackBonusExternal = atk;
         defenseBonusExternal = def;
     }
+    
+    public void setX(float x) {
+    this.x = x;
+}
+
+public void setY(float y) {
+    this.y = y;
+}
+
+public float getX() {
+    return x;
+}
+
+public float getY() {
+    return y;
+}
  
     @Override
     public void update(float targetX, float targetY, int mapW, int mapH) {
@@ -67,6 +83,8 @@ public class Player extends Entity{
     public float getAngle() { return angle; }
     public float getAnimPhase() { return animPhase; }
  
+    
+    
     @Override
     public void draw(Graphics2D g2) {
         float anim = animPhase;

@@ -61,7 +61,13 @@ public class BattleScreen extends BasePanel {
     public BattleScreen() {
         setFocusable(true);
         setupInput();
+        requestFocusInWindow();
     }
+ @Override
+public void addNotify() {
+    super.addNotify();
+    requestFocusInWindow();
+}
 
     public void setMapId(int id) {
         this.mapId = id;
@@ -82,14 +88,16 @@ public class BattleScreen extends BasePanel {
         player.setExternalBonuses(pd.getTotalAttackBonus(), pd.getTotalDefenseBonus());
 
         initMap();
-        requestFocusInWindow();
 
         gameLoop = new javax.swing.Timer(16, e -> tick());
         gameLoop.start();
         showNotif("MAP " + mapId + " — DIMULAI!", 120);
-    }
+        SwingUtilities.invokeLater(() -> requestFocusInWindow());
+}
+    
 
     private void initMap() {
+        cameraX = 0;
         switch (mapId) {
             case 1:
                 // 5 soldiers + 1 mini boss
@@ -103,16 +111,21 @@ public class BattleScreen extends BasePanel {
                 showNotif("BERTAHAN 15 DETIK!", 150);
                 break;
             case 3:
+
                 player.setX(80);
                 player.setY(MAP_H / 2f);
 
-                // Spawn monster sepanjang jalan
-                spawnSoldiers(3, 1);
+                // finish dulu
+                finishArea = new Rectangle(
+                        WORLD_W - 120,
+                        MAP_H / 2 - 60,
+                        80,
+                        120
+                );
 
-                // Finish area di ujung map
-                finishArea = new Rectangle(WORLD_W - 120, MAP_H / 2 - 60, 80, 120);
                 miniBossSpawned = false;
                 reachedFinish = false;
+
                 showNotif("CAPAI GARIS AKHIR!", 150);
                 break;
 
@@ -137,59 +150,83 @@ public class BattleScreen extends BasePanel {
     }
 
     private void spawnMiniBosses(int count) {
-        float[] xs = {150, MAP_W - 150};
-        float[] ys = {120, MAP_H - 120};
-        for (int i = 0; i < count; i++) {
-            miniBosses.add(new MiniBoss(xs[i % 2], ys[i % 2]));
+
+        if (finishArea == null) {
+            return;
         }
+
+        miniBosses.clear();
+
+        float baseX = finishArea.x - 200;
+
+        float[] xs = {
+            baseX,
+            baseX + 120
+        };
+
+        float[] ys = {
+            180,
+            MAP_H - 180
+        };
+
+        for (int i = 0; i < count; i++) {
+
+            miniBosses.add(
+                    new MiniBoss(
+                            xs[i % xs.length],
+                            ys[i % ys.length]
+                    )
+            );
+        }
+
+        miniBossSpawned = true;
+
+        showNotif("MINI BOSS MUNCUL!", 120);
     }
 
     // ===========================
     // GAME LOOP TICK
     // ===========================
     private void tick() {
-        if (state != State.PLAYING) {
-            return;
+        if (state != State.PLAYING) {return;
         }
-        gameTick++;
+        float moveX = 0;
 
-        // Player movement
-        float spd = 3.5f;
-        player.dx = 0;
-        player.dy = 0;
-        if (keyUp) {
-            player.dy -= 1;
-        }
-        if (keyDown) {
-            player.dy += 1;
-        }
-        if (keyLeft) {
-            player.dx -= 1;
-        }
-        if (keyRight) {
-            player.dx += 1;
-        }
 
-        float len = (float) Math.sqrt(player.dx * player.dx + player.dy * player.dy);
-        // supaya normalize tidak lebih cepat
+ 
+if (keyLeft) moveX -= 1;
+if (keyRight) moveX += 1;
 
-        if (len > 0) {
-            player.dx = (player.dx / len) * spd;
-            player.dy = (player.dy / len) * spd;
-        }
+if (moveX != 0) {
+    moveX = (moveX / Math.abs(moveX)) * 3.5f;
+    player.addMovement(moveX, 0);
 
+//    if (len > 0) {
+//        moveX = (moveX / len) * 3.5f;
+//        moveY = (moveY / len) * 3.5f;
+//
+//        player.addMovement(moveX, moveY);
+    }
+if (mapId == 3) {
         player.update(mousePos.x, mousePos.y, WORLD_W, MAP_H);
-        // Kamera mengikuti player
-        cameraX = (int) (player.getX() - MAP_W / 2);
+    } else {
+        player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
+    
+repaint ();
+        
+        }
 
-// batas kamera
-        cameraX = Math.max(
-                0,
-                Math.min(cameraX, WORLD_W - MAP_W)
-        );
         // MAP 3 : spawn musuh saat berjalan
         if (mapId == 3) {
             spawnCooldown--;
+            // Kamera mengikuti player
+            cameraX = (int) (player.getX() - MAP_W / 2);
+
+// batas kamera
+            cameraX = Math.max(
+                    0,
+                    Math.min(cameraX, WORLD_W - MAP_W)
+            );
 
             if (spawnCooldown <= 0) {
                 float x = player.getX() + 300;
@@ -206,33 +243,44 @@ public class BattleScreen extends BasePanel {
             }
 
             // Sampai finish → munculkan mini boss
-            if (player.getX() >= WORLD_W - 200 &&
-    !miniBossSpawned) {
+            if (player.getX() >= WORLD_W - 200
+                    && !miniBossSpawned) {
 
-    miniBosses.clear();
+                miniBosses.clear();
 
-    miniBosses.add(
-        new MiniBoss(
-            WORLD_W - 100,
-            MAP_H / 2f
-        )
-    );
+                miniBosses.add(
+                        new MiniBoss(
+                                WORLD_W - 100,
+                                MAP_H / 2f
+                        )
+                );
 
-    miniBossSpawned = true;
+                miniBossSpawned = true;
 
-    showNotif("MINI BOSS MUNCUL!", 120);
-}
+                showNotif("MINI BOSS MUNCUL!", 120);
+            }
         }
 
         // Update enemies
         for (Soldier s : soldiers) {
             if (s.isAlive()) {
-                s.update(player.getX(), player.getY(), MAP_W, MAP_H);
+
+                if (mapId == 3) {
+                    s.update(player.getX(), player.getY(), WORLD_W, MAP_H);
+                } else {
+                    s.update(player.getX(), player.getY(), MAP_W, MAP_H);
+                }
             }
         }
+
         for (MiniBoss mb : miniBosses) {
             if (mb.isAlive()) {
-                mb.update(player.getX(), player.getY(), MAP_W, MAP_H);
+
+                if (mapId == 3) {
+                    mb.update(player.getX(), player.getY(), WORLD_W, MAP_H);
+                } else {
+                    mb.update(player.getX(), player.getY(), MAP_W, MAP_H);
+                }
             }
         }
         if (finalBoss != null && finalBoss.isAlive()) {
@@ -449,8 +497,9 @@ public class BattleScreen extends BasePanel {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 //        drawBattleBackground(g2);
-        g2.translate(-cameraX, 0);
-
+        if (mapId == 3) {
+            g2.translate(-cameraX, 0);
+        }
         drawBattleBackground(g2);
 
         if (player != null) {
@@ -479,8 +528,9 @@ public class BattleScreen extends BasePanel {
             d.draw(g2);
         }
         // HUD
-        g2.translate(cameraX, 0);
-        drawHUD(g2);
+        if (mapId == 3) {
+            g2.translate(cameraX, 0);
+        }
 
         // Win/Lose overlay
         if (state == State.WIN) {
@@ -525,6 +575,10 @@ public class BattleScreen extends BasePanel {
     }
 
     private void drawBattleBackground(Graphics2D g2) {
+        int currentWidth = (mapId == 3)
+                ? WORLD_W
+                : MAP_W;
+
         // Tilted dark ground
         Color groundColor;
         switch (mapId) {
@@ -542,17 +596,17 @@ public class BattleScreen extends BasePanel {
                 break;
         }
         g2.setColor(groundColor);
-        g2.fillRect(0, 0, WORLD_W, MAP_H);
+        g2.fillRect(0, 0, currentWidth, MAP_H);
 
 // Grid tiles
         g2.setColor(new Color(255, 255, 255, 10));
 
-        for (int x = 0; x < WORLD_W; x += 60) {
+        for (int x = 0; x < currentWidth; x += 60) {
             g2.drawLine(x, 0, x, MAP_H);
         }
 
         for (int y = 0; y < MAP_H; y += 60) {
-            g2.drawLine(0, y, WORLD_W, y);
+            g2.drawLine(0, y, currentWidth, y);
         }
 
         // Border walls
@@ -694,11 +748,18 @@ public class BattleScreen extends BasePanel {
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+       
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_W:
                     case KeyEvent.VK_UP:
                         keyUp = true;
                         break;
+                         case KeyEvent.VK_SPACE:
+                        if (!player.isJumping()) {
+                            player.jump();
+                        }
+                        break;
+
                     case KeyEvent.VK_S:
                     case KeyEvent.VK_DOWN:
                         keyDown = true;
@@ -717,6 +778,7 @@ public class BattleScreen extends BasePanel {
                         }
                         GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAIN_MENU);
                         break;
+                 
                 }
             }
 
@@ -742,6 +804,7 @@ public class BattleScreen extends BasePanel {
                 }
             }
         });
+        
 
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
@@ -771,6 +834,7 @@ public class BattleScreen extends BasePanel {
             }
         });
     }
+
 
     private void handleEndClick(int mx, int my) {
         int cx = MAP_W / 2, cy = MAP_H / 2;

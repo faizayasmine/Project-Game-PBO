@@ -24,6 +24,10 @@ public class FinalBoss extends Entity {
             speed = 2;
             attack = 50;
         }
+        if (isEnraged()) {
+    speed = 5;
+    attack = 30;
+}
         float dx = targetX - x, dy = targetY - y;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
         float spd = phase == 2 ? 2.5f : 1.5f;
@@ -59,7 +63,7 @@ public class FinalBoss extends Entity {
     }
 
     public boolean isEnraged() {
-        return phase == 2;
+        return hp < maxHp * 0.3f;
     }
 
     @Override

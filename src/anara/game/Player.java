@@ -13,12 +13,6 @@ public class Player extends Entity {
     public boolean isAttacking = false;
     public int attackFrame = 0;
     private float animPhase = 0f;
-    private float velocityY = 0;
-    private boolean jumping = false;
-
-    private final float GRAVITY = 0.6f;
-    private final float JUMP_POWER = -12f;
-    private final float GROUND_Y = 300;
 
     public Player(float x, float y) {
         super(x, y, 150, 25, 5, 3);
@@ -53,14 +47,7 @@ public class Player extends Entity {
         x = Math.max(30, Math.min(mapW - 30, x));
         y = Math.max(30, Math.min(mapH - 30, y));
         
-        velocityY += GRAVITY;
-        y += velocityY;
 
-        if (y >= GROUND_Y) {
-            y = GROUND_Y;
-            velocityY = 0;
-            jumping = false;
-        }
      x = Math.max(30, Math.min(mapW - 30, x));
         y = Math.max(30, Math.min(mapH - 30, y));
 
@@ -139,13 +126,6 @@ public class Player extends Entity {
         return animPhase;
     }
 //
-public void jump() {
-      velocityY = JUMP_POWER;
-        jumping = true;
-  }
-   public boolean isJumping() {
-       return jumping;
-   }
 
     @Override
     public void draw(Graphics2D g2) {

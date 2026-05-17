@@ -14,7 +14,10 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
+
 public class BattleScreen extends BasePanel {
+private int bossSpawnCooldown = 0;
+private boolean finalBossAppeared = false;
 
     // ===== Map Config =====
     private int mapId = 1;
@@ -84,10 +87,14 @@ public void addNotify() {
         miniBossSpawned = false;
 
         PlayerData pd = GameEngine.getInstance().getCurrentPlayer();
-        player = new Player(MAP_W / 2f, MAP_H / 2f);
-        player.setExternalBonuses(pd.getTotalAttackBonus(), pd.getTotalDefenseBonus());
 
-        initMap();
+player = new Player(MAP_W / 2f, MAP_H / 2f);
+player.setExternalBonuses(
+    pd.getTotalAttackBonus(),
+    pd.getTotalDefenseBonus()
+);
+
+initMap();
 
         gameLoop = new javax.swing.Timer(16, e -> tick());
         gameLoop.start();
@@ -131,23 +138,26 @@ public void addNotify() {
 
             case 4:
                 // Final Boss
-                finalBoss = new FinalBoss(MAP_W / 2f, 100);
+                spawnSoldiers(6, 2);
+
+finalBoss = null;
+
+finalBossAppeared = false;
                 showNotif("FINAL BOSS — HADAPI TAKDIRMU!", 180);
                 break;
         }
     }
 
     private void spawnSoldiers(int count, int tier) {
-        for (int i = 0; i < count; i++) {
-            float sx = 50 + new Random().nextFloat() * (MAP_W - 100);
-            float sy = 50 + new Random().nextFloat() * (MAP_H - 100);
-            // Keep away from player
-            if (Math.abs(sx - MAP_W / 2f) < 100) {
-                sx += 150;
-            }
-            soldiers.add(new Soldier(sx, sy, tier));
-        }
+
+    for (int i = 0; i < count; i++) {
+
+        float sx = 200 + (i * 80);
+        float sy = 120;
+
+        soldiers.add(new Soldier(sx, sy, tier));
     }
+}
 
     private void spawnMiniBosses(int count) {
 
@@ -190,32 +200,29 @@ public void addNotify() {
     private void tick() {
         if (state != State.PLAYING) {return;
         }
-        float moveX = 0;
+       float moveX = 0;
+float moveY = 0;
 
-
- 
+if (keyUp) moveY -= 1;
+if (keyDown) moveY += 1;
 if (keyLeft) moveX -= 1;
 if (keyRight) moveX += 1;
 
-if (moveX != 0) {
-    moveX = (moveX / Math.abs(moveX)) * 3.5f;
-    player.addMovement(moveX, 0);
+float len = (float) Math.sqrt(moveX * moveX + moveY * moveY);
 
-//    if (len > 0) {
-//        moveX = (moveX / len) * 3.5f;
-//        moveY = (moveY / len) * 3.5f;
-//
-//        player.addMovement(moveX, moveY);
-    }
+if (len > 0) {
+    moveX = (moveX / len) * 3.5f;
+    moveY = (moveY / len) * 3.5f;
+
+    player.addMovement(moveX, moveY);
+}
 if (mapId == 3) {
         player.update(mousePos.x, mousePos.y, WORLD_W, MAP_H);
     } else {
         player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
-    
 repaint ();
         
-        }
-
+}
         // MAP 3 : spawn musuh saat berjalan
         if (mapId == 3) {
             spawnCooldown--;
@@ -260,6 +267,41 @@ repaint ();
                 showNotif("MINI BOSS MUNCUL!", 120);
             }
         }
+        // ===== MAP 4 PHASE SYSTEM =====
+if (mapId == 4) {
+
+    // kalau semua monster awal mati
+   if (!finalBossAppeared &&
+    soldiers.stream().noneMatch(s -> s.isAlive())) {
+
+    finalBoss = new FinalBoss(MAP_W / 2f, 120);
+
+    finalBossAppeared = true;
+
+    showNotif("FINAL BOSS MUNCUL!", 180);
+}
+
+    // boss summon monster perlahan
+    if (finalBoss != null && finalBoss.isAlive()) {
+
+        bossSpawnCooldown--;
+
+        if (bossSpawnCooldown <= 0) {
+
+            soldiers.add(
+                new Soldier(
+                    finalBoss.getX() + new Random().nextInt(200) - 100,
+                    finalBoss.getY() + new Random().nextInt(200) - 100,
+                    2
+                )
+            );
+
+            showNotif("FINAL BOSS MEMANGGIL PASUKAN!", 90);
+
+            bossSpawnCooldown = 300; // 5 detik
+        }
+    }
+}
 
         // Update enemies
         for (Soldier s : soldiers) {
@@ -390,9 +432,22 @@ repaint ();
                 }
                 break;
             case 4:
-                if (finalBoss != null && !finalBoss.isAlive()) {
-                    endBattle(true);
-                }
+             
+
+    player.setX(MAP_W / 2f);
+    player.setY(MAP_H - 120);
+
+    spawnSoldiers(6, 2);
+
+    finalBoss = null;
+
+    finalBossAppeared = false;
+
+    bossSpawnCooldown = 300;
+
+    showNotif("BASMI PASUKAN PENJAGA!", 180);
+
+    
                 break;
         }
     }
@@ -402,7 +457,7 @@ repaint ();
         if (gameLoop != null) {
             gameLoop.stop();
         }
-
+       
         // Reward gold on win
         if (won) {
             PlayerData pd = GameEngine.getInstance().getCurrentPlayer();
@@ -753,11 +808,6 @@ repaint ();
                     case KeyEvent.VK_W:
                     case KeyEvent.VK_UP:
                         keyUp = true;
-                        break;
-                         case KeyEvent.VK_SPACE:
-                        if (!player.isJumping()) {
-                            player.jump();
-                        }
                         break;
 
                     case KeyEvent.VK_S:

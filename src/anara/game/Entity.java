@@ -26,6 +26,11 @@ public abstract class Entity {
         hp = Math.max(0, hp - actual);
         if (hp <= 0) alive = false;
     }
+    
+    public void nudge(float dx, float dy) {
+        this.x += dx;
+        this.y += dy;
+    }
 
     public float getHpRatio() { return (float) hp / maxHp; }
     public boolean isAlive() { return alive; }
@@ -35,5 +40,12 @@ public abstract class Entity {
 
     public abstract void update(float targetX, float targetY, int mapW, int mapH);
     public abstract void draw(Graphics2D g2);
-} 
+    
+    public void setX(float x) {
+        this.x = x;
+    }
 
+    public void setY(float y) {
+        this.y = y;
+    }
+}

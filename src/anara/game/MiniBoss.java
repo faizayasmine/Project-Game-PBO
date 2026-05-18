@@ -15,32 +15,53 @@ public class MiniBoss extends Entity {
     }
 
     @Override
-    public void update(float targetX, float targetY, int mapW, int mapH) {
-        animPhase += 0.06f;
-        float dx = targetX - x, dy = targetY - y;
-        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+    public void update(float playerX, float playerY, int mapW, int mapH) {
+        // 1. Kunci posisi Y agar tetap sejajar di tanah bawah
+        this.y = playerY;
 
-        // Pattern: circle strafe then charge
-        pattern = (pattern + 1) % 200;
-        if (pattern < 100) {
-            float strafe = (float) Math.sin(animPhase * 2) * 3;
-            float perp = (float) Math.cos(animPhase * 2) * 3;
-            this.x += (dx / dist) * 1 + perp;
-            this.y += (dy / dist) * 1 + strafe;
+        float miniBossSpeed = 1.2f;
+        int attackRange = 45; // Jarak pukul
+
+        // Hitung jarak horizontal murni
+        float distanceX = Math.abs(this.x - playerX);
+
+        if (distanceX > attackRange) {
+            // Jika masih jauh, berjalan mendekati player
+            if (this.x > playerX) {
+                this.x -= miniBossSpeed;
+            } else {
+                this.x += miniBossSpeed;
+            }
+
+            // TAMBAHKAN INI (Jika ada variabel status serang di filemu, matikan saat jalan):
+            // this.isAttacking = false; 
+
         } else {
-            this.x += (dx / dist) * 3.5f;
-            this.y += (dy / dist) * 3.5f;
+            // ==========================================================
+            // UTAMA: LOGIKA KETIKA SUDAH DEKAT (MEMUKUL PLAYER)
+            // ==========================================================
+
+            // Opsi A: Jika game kamu menggunakan sistem timer cooldown bawaan (Cari kodenya di file aslimu)
+            if (this.attackCooldown <= 0) {
+                this.attackCooldown = 60; // Reset jeda serang ±1 detik
+                // Panggil fungsi memukul bawaan game kamu, contoh:
+                // this.performAttack(); 
+            }
+
+            // Opsi B: Jika game kamu menggunakan status boolean (Contoh)
+            // this.isAttacking = true;
         }
-        this.x = Math.max(30, Math.min(mapW - 30, this.x));
-        this.y = Math.max(30, Math.min(mapH - 30, this.y));
-        if (attackCooldown > 0) {
-            attackCooldown--;
+
+        // TAMBAHKAN INI DI PALING BAWAH METHOD:
+        // Pastikan kode bawaan asli milikmu untuk mengurangi attackCooldown setiap frame tetap berjalan!
+        if (this.attackCooldown > 0) {
+            this.attackCooldown--;
         }
     }
 
     public boolean canAttack(float px, float py) {
         float dist = (float) Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2));
-        return dist < 35 && attackCooldown == 0;
+        return dist < 65 && attackCooldown == 0;
     }
 
     public int doAttack() {

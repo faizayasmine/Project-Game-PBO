@@ -34,6 +34,11 @@ private boolean finalBossAppeared = false;
     private List<Soldier> soldiers = new ArrayList<>();
     private List<MiniBoss> miniBosses = new ArrayList<>();
     private FinalBoss finalBoss;
+    
+    // ===== Map 1 Timer =====
+    private int soldierSpawnTimer = 0;
+    private int remainingSoldiersToSpawn = 0;
+    private boolean miniBossSpawned = false;
 
     // ===== Map 2 timer =====
     private int survivalTicks = 0;
@@ -45,11 +50,10 @@ private boolean finalBossAppeared = false;
     private static final int WORLD_W = 3000;
     private int cameraX = 0;
     private Rectangle finishArea;
-    private boolean miniBossSpawned = false;
     private boolean reachedFinish = false;
 
     // ===== Input =====
-    private boolean keyUp, keyDown, keyLeft, keyRight;
+    private boolean keyLeft, keyRight;
     private Point mousePos = new Point(450, 300);
 
     // ===== Game loop =====
@@ -66,11 +70,11 @@ private boolean finalBossAppeared = false;
         setupInput();
         requestFocusInWindow();
     }
- @Override
-public void addNotify() {
-    super.addNotify();
-    requestFocusInWindow();
-}
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        requestFocusInWindow();
+    }
 
     public void setMapId(int id) {
         this.mapId = id;
@@ -93,47 +97,41 @@ public void addNotify() {
 
         PlayerData pd = GameEngine.getInstance().getCurrentPlayer();
 
-player = new Player(MAP_W / 2f, MAP_H / 2f);
-player.setExternalBonuses(
-    pd.getTotalAttackBonus(),
-    pd.getTotalDefenseBonus()
-);
+        // MAP_H itu 580. Kalau dibagi 2 = 290 (tengah). 
+        // Kita tambah 130f agar posisinya turun menjadi 420 lebih rendah ke tanah
+        player = new Player(MAP_W / 2f, (MAP_H / 2f) + 130f);
+        player.setExternalBonuses(pd.getTotalAttackBonus(),pd.getTotalDefenseBonus());
 
-initMap();
-
-        gameLoop = new javax.swing.Timer(16, e -> tick());
-        gameLoop.start();
-        showNotif("MAP " + mapId + " — DIMULAI!", 120);
-        SwingUtilities.invokeLater(() -> requestFocusInWindow());
-}
+        initMap();
+            gameLoop = new javax.swing.Timer(16, e -> tick());
+            gameLoop.start();
+            showNotif("MAP " + mapId + " — DIMULAI!", 120);
+            SwingUtilities.invokeLater(() -> requestFocusInWindow());
+    }
     
 
     private void initMap() {
         cameraX = 0;
         switch (mapId) {
             case 1:
-                // 5 soldiers + 1 mini boss
-                spawnSoldiers(5, 1);
-                // Mini boss akan muncul via checkWinLose() setelah semua soldier mati
+                soldiers.clear();
+                miniBosses.clear();
+                remainingSoldiersToSpawn = 5; // Mengantrekan 5 prajurit
+                soldierSpawnTimer = 60;       // Muncul pertama setelah 1 detik
+                miniBossSpawned = false;      // Reset status boss saat map mulai
+                showNotif("MAP 1 — DIMULAI!", 150);
                 break;
             case 2:
                 // Endless spawn, survival 15 sec
                 spawnSoldiers(4, 1);
-                spawnMiniBosses(1);
                 showNotif("BERTAHAN 15 DETIK!", 150);
                 break;
             case 3:
-
                 player.setX(80);
-                player.setY(MAP_H / 2f);
+                player.setY((MAP_H / 2f)+130f);
 
                 // finish dulu
-                finishArea = new Rectangle(
-                        WORLD_W - 120,
-                        MAP_H / 2 - 60,
-                        80,
-                        120
-                );
+                finishArea = new Rectangle(WORLD_W - 120,MAP_H / 2 - 60,80,120);
 
                 miniBossSpawned = false;
                 reachedFinish = false;
@@ -154,35 +152,28 @@ initMap();
     }
 
     private void spawnSoldiers(int count, int tier) {
-
-    for (int i = 0; i < count; i++) {
-
-        float sx = 200 + (i * 80);
-        float sy = 120;
-
-        soldiers.add(new Soldier(sx, sy, tier));
+        int groundY = (int) ((MAP_H / 2) + 130);
+        for (int i = 0; i < count; i++) {
+            int sx = 200 + (i * 80); 
+            int sy = groundY; 
+            soldiers.add(new Soldier(sx, sy, tier));
+        }
     }
-}
 
-    // BUG FIX #1: spawnMiniBosses() sebelumnya selalu return dini karena
-    // guard "if (finishArea == null) return;" — padahal finishArea hanya diset
-    // di Map 3, sehingga mini boss TIDAK PERNAH muncul di Map 1 dan Map 2.
-    // Fix: gunakan posisi fallback berbasis MAP_W/MAP_H jika finishArea null.
     private void spawnMiniBosses(int count) {
         miniBosses.clear();
-
         float baseX, baseY0, baseY1;
 
         if (finishArea != null) {
-            // Map 3: spawn di depan garis finish
             baseX  = finishArea.x - 200;
-            baseY0 = 180;
-            baseY1 = MAP_H - 180;
+            // Map 3: kunci di posisi bawah
+            baseY0 = (MAP_H / 2f) + 130f;
+            baseY1 = (MAP_H / 2f) + 130f;
         } else {
-            // Map 1 & Map 2: spawn di tengah-kanan arena
             baseX  = MAP_W * 0.65f;
-            baseY0 = MAP_H * 0.30f;
-            baseY1 = MAP_H * 0.70f;
+            // Map 1 & 2: kunci di posisi bawah
+            baseY0 = (MAP_H / 2f) + 130f;
+            baseY1 = (MAP_H / 2f) + 130f;
         }
 
         float[] xs = { baseX, baseX + 120 };
@@ -198,152 +189,131 @@ initMap();
         }
 
         miniBossSpawned = true;
-        showNotif("MINI BOSS MUNCUL!", 120);
+        showNotif("PERINGATAN: MINI BOSS TELAH MUNCUL!", 180);
     }
 
     // ===========================
     // GAME LOOP TICK
     // ===========================
     private void tick() {
-        if (state != State.PLAYING) {return;
+        if (state != State.PLAYING) {
+            return;
         }
-       float moveX = 0;
-float moveY = 0;
+        float playerSpeed = 4.0f;
+        float moveX = 0;
+        if (keyLeft) moveX -= playerSpeed;
+        if (keyRight) moveX += playerSpeed;
 
-if (keyUp) moveY -= 1;
-if (keyDown) moveY += 1;
-if (keyLeft) moveX -= 1;
-if (keyRight) moveX += 1;
-
-float len = (float) Math.sqrt(moveX * moveX + moveY * moveY);
-
-if (len > 0) {
-    moveX = (moveX / len) * 3.5f;
-    moveY = (moveY / len) * 3.5f;
-
-    player.addMovement(moveX, moveY);
-}
-if (mapId == 3) {
-        player.update(mousePos.x, mousePos.y, WORLD_W, MAP_H);
-    } else {
-        player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
-repaint ();
+        if (moveX != 0) {
+            player.addMovement(moveX, 0); // Gerak vertikal dikunci di angka 0
+        }
         
-}
+        // Logika Spawn Soldier Map 1
+        // Taruh ini di bagian atas di dalam method tick()
+        if (mapId == 1 && remainingSoldiersToSpawn > 0) {
+            soldierSpawnTimer--;
+            if (soldierSpawnTimer <= 0) {
+                spawnSoldiers(1, 1); 
+                soldierSpawnTimer = 180; 
+            }
+        }
+        
+        if (mapId == 3) {
+                player.update(mousePos.x, mousePos.y, WORLD_W, MAP_H);
+            } else {
+                player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
+        repaint ();
+
+        }
         // MAP 3 : spawn musuh saat berjalan
         if (mapId == 3) {
             spawnCooldown--;
             // Kamera mengikuti player
             cameraX = (int) (player.getX() - MAP_W / 2);
 
-// batas kamera
+        // batas kamera
             cameraX = Math.max(
                     0,
                     Math.min(cameraX, WORLD_W - MAP_W)
             );
-
             if (spawnCooldown <= 0) {
                 float x = player.getX() + 300;
-
                 if (x < WORLD_W - 150) {
-                    soldiers.add(new Soldier(
-                            x,
-                            100 + new Random().nextInt(300),
-                            1
-                    ));
+                    soldiers.add(new Soldier((int) x, (int) ((MAP_H / 2) + 130), 2));
                 }
-
                 spawnCooldown = 120; // tiap ±2 detik
             }
-
-            // Sampai finish → munculkan 2 mini boss
-            // BUG FIX #4: Sebelumnya hanya spawn 1 MiniBoss, padahal nama map
-            // dan deskripsi menyebut "DUA MINI BOSS". Sekarang spawn 2.
-            if (player.getX() >= WORLD_W - 200
-                    && !miniBossSpawned) {
-
+            if (player.getX() >= WORLD_W - 200 && !miniBossSpawned && remainingSoldiersToSpawn == 0 && soldiers.isEmpty()) {
                 miniBosses.clear();
-
                 miniBosses.add(
-                        new MiniBoss(
-                                WORLD_W - 100,
-                                MAP_H / 2f - 80   // Mini Boss pertama, atas tengah
-                        )
-                );
-
+                    new MiniBoss((int) (WORLD_W - 100), (int) ((MAP_H / 2) + 130)));
                 miniBosses.add(
-                        new MiniBoss(
-                                WORLD_W - 100,
-                                MAP_H / 2f + 80   // Mini Boss kedua, bawah tengah
-                        )
-                );
+                    new MiniBoss((int) (WORLD_W - 160), (int) ((MAP_H / 2) + 130)));
 
                 miniBossSpawned = true;
-
-                showNotif("2 MINI BOSS MUNCUL!", 120);
+                showNotif("PERINGATAN: MINI BOSS TELAH MUNCUL!", 180);
             }
         }
         // ===== MAP 4 PHASE SYSTEM =====
-if (mapId == 4) {
-
-    // kalau semua monster awal mati
-   if (!finalBossAppeared &&
-    soldiers.stream().noneMatch(s -> s.isAlive())) {
-
-    finalBoss = new FinalBoss(MAP_W / 2f, 120);
-
-    finalBossAppeared = true;
-
-    showNotif("FINAL BOSS MUNCUL!", 180);
-}
-
-    // boss summon monster perlahan
-    if (finalBoss != null && finalBoss.isAlive()) {
-
-        bossSpawnCooldown--;
-
-        if (bossSpawnCooldown <= 0) {
-
-            soldiers.add(
-                new Soldier(
-                    finalBoss.getX() + new Random().nextInt(200) - 100,
-                    finalBoss.getY() + new Random().nextInt(200) - 100,
-                    2
-                )
-            );
-
-            showNotif("FINAL BOSS MEMANGGIL PASUKAN!", 90);
-
-            bossSpawnCooldown = 300; // 5 detik
+        if (mapId == 4) {
+        // kalau semua monster awal mati
+           if (!finalBossAppeared &&
+            soldiers.stream().noneMatch(s -> s.isAlive())) {
+            finalBoss = new FinalBoss(MAP_W / 2f, 120);
+            finalBossAppeared = true;
+            showNotif("FINAL BOSS MUNCUL!", 180);
         }
-    }
-}
+        // boss summon monster perlahan
+            if (finalBoss != null && finalBoss.isAlive()) {
+                bossSpawnCooldown--;
+                if (bossSpawnCooldown <= 0) {
+                    soldiers.add(
+                        new Soldier(
+                            finalBoss.getX() + new Random().nextInt(200) - 100,
+                            finalBoss.getY() + new Random().nextInt(200) - 100,
+                            2
+                        )
+                    );
+                    showNotif("FINAL BOSS MEMANGGIL PASUKAN!", 90);
+                    bossSpawnCooldown = 300; // 5 detik
+                }
+            }
+        }
+        
+        // Tentukan tinggi tanah kaku untuk mengunci posisi vertikal musuh
+        int targetGroundY = (int) ((MAP_H / 2) + 130);
 
-        // Update enemies
+        // Update para Soldier
         for (Soldier s : soldiers) {
             if (s.isAlive()) {
-
+                // PARAMETER KEDUA DIPAKSA MENGGUNAKAN targetGroundY
                 if (mapId == 3) {
-                    s.update(player.getX(), player.getY(), WORLD_W, MAP_H);
+                    s.update(player.getX(), targetGroundY, WORLD_W, MAP_H);
                 } else {
-                    s.update(player.getX(), player.getY(), MAP_W, MAP_H);
+                    s.update(player.getX(), targetGroundY, MAP_W, MAP_H);
                 }
             }
         }
 
+        // Update para Mini Boss
         for (MiniBoss mb : miniBosses) {
             if (mb.isAlive()) {
-
+                // PARAMETER KEDUA DIPAKSA MENGGUNAKAN targetGroundY
                 if (mapId == 3) {
-                    mb.update(player.getX(), player.getY(), WORLD_W, MAP_H);
+                    mb.update(player.getX(), targetGroundY, WORLD_W, MAP_H);
                 } else {
-                    mb.update(player.getX(), player.getY(), MAP_W, MAP_H);
+                    mb.update(player.getX(), targetGroundY, MAP_W, MAP_H);
                 }
             }
         }
+        
         if (finalBoss != null && finalBoss.isAlive()) {
             finalBoss.update(player.getX(), player.getY(), MAP_W, MAP_H);
         }
+        
+        // ===== PANGGIL DI SINI =====
+        // Ini akan membenahi posisi semua musuh sebelum kalkulasi serangan dimulai
+        applyEnemySteeringAndSeparation();
 
         // Enemy attacks player
         for (Soldier s : soldiers) {
@@ -377,22 +347,29 @@ if (mapId == 4) {
 
         // Map 2: spawn more soldiers
         if (mapId == 2) {
-            survivalTicks++;
-            spawnCooldown--;
-            if (spawnCooldown <= 0) {
-                spawnSoldiers(2, survivalTicks > 500 ? 2 : 1);
-                spawnCooldown = 120 - Math.min(90, survivalTicks / 20);
+            // Prajurit hanya bertambah dan spawn jika waktu survival belum habis
+            if (survivalTicks < SURVIVAL_TARGET) {
+                survivalTicks++;
+                spawnCooldown--;
+                if (spawnCooldown <= 0) {
+                    spawnSoldiers(2, survivalTicks > 500 ? 2 : 1);
+                    spawnCooldown = 120 - Math.min(90, survivalTicks / 20);
+                }
+            } 
+            // JIKA WAKTU HABIS dan Mini Boss belum sempat dimunculkan
+            else if (miniBosses.isEmpty()) { 
+                spawnMiniBosses(1); // Munculkan 1 Mini Boss setelah 15 detik selesai
             }
         }
 
         // Update damage texts
         damageTexts.removeIf(d -> d.life <= 0);
-        for (DamageText d : damageTexts) {
+        for (DamageText d : damageTexts){
             d.update();
         }
 
         // Notif timer
-        if (notifTimer > 0) {
+        if (notifTimer > 0){
             notifTimer--;
         }
 
@@ -407,15 +384,12 @@ if (mapId == 4) {
             endBattle(false);
             return;
         }
-
         switch (mapId) {
-
             case 1:
                 // Semua soldier mati → spawn mini boss
                 if (soldiers.stream().noneMatch(s -> s.isAlive()) && miniBosses.isEmpty()) {
                     spawnMiniBosses(1);
                 }
-
                 // Menang kalau mini boss mati
                 boolean bossDead = miniBosses.stream().noneMatch(mb -> mb.isAlive());
                 if (!miniBosses.isEmpty() && bossDead) {
@@ -424,27 +398,22 @@ if (mapId == 4) {
                 break;
 
             case 2:
-                if (survivalTicks >= SURVIVAL_TARGET) {
-                    endBattle(true);
+                // Menang JIKA waktu sudah habis, Mini Boss sudah muncul, dan semua Mini Boss sudah mati
+                if (survivalTicks >= SURVIVAL_TARGET && !miniBosses.isEmpty()) {
+                    boolean allBossesDead = miniBosses.stream().noneMatch(mb -> mb.isAlive());
+                    if (allBossesDead) {
+                        endBattle(true); // Pemicu Kemenangan!
+                    }
                 }
                 break;
 
             case 3:
-                boolean miniBossDead
-                        = miniBosses.stream()
-                                .noneMatch(mb -> mb.isAlive());
-
+                boolean miniBossDead = miniBosses.stream().noneMatch(mb -> mb.isAlive());
                 if (miniBossDead && player.getX() >= WORLD_W - 150) {
                     endBattle(true);
                 }
                 break;
 
-            // BUG FIX #2: Case 4 sebelumnya TIDAK memiliki kondisi apapun —
-            // seluruh isi case langsung dieksekusi setiap tick (±60x/detik),
-            // yang menyebabkan: posisi player direset, 6 soldier baru di-spawn,
-            // finalBoss dihapus, dan flag direset — setiap frame.
-            // Map 4 jadi mustahil dimainkan. Fix: tambahkan kondisi yang benar:
-            // menang jika final boss sudah muncul dan sudah mati.
             case 4:
                 if (finalBossAppeared && finalBoss != null && !finalBoss.isAlive()) {
                     endBattle(true);
@@ -479,15 +448,12 @@ if (mapId == 4) {
         }
         int dmg = player.doAttack();
         float px = player.getX(), py = player.getY();
-
-        // Melee: hit nearest enemy in range
-        float range = 45f;//range attack lebih kecil
+        float range = 65f;
+        
         for (Soldier s : soldiers) {
 
             if (s.isAlive() && dist(px, py, s.getX(), s.getY()) < range) {
-
                 s.takeDamage(dmg);
-
                 spawnDamageText(
                         s.getX(),
                         s.getY() - 20,
@@ -498,11 +464,8 @@ if (mapId == 4) {
         }
 
         for (MiniBoss mb : miniBosses) {
-
             if (mb.isAlive() && dist(px, py, mb.getX(), mb.getY()) < range) {
-
                 mb.takeDamage(dmg);
-
                 spawnDamageText(
                         mb.getX(),
                         mb.getY() - 20,
@@ -547,92 +510,72 @@ if (mapId == 4) {
     // RENDER
     // ===========================
     @Override
-protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
 
-    Graphics2D g2 = (Graphics2D) g.create();
+        Graphics2D g2 = (Graphics2D) g.create();
 
-    g2.setRenderingHint(
-        RenderingHints.KEY_ANTIALIASING,
-        RenderingHints.VALUE_ANTIALIAS_ON
-    );
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    // ===== WORLD LAYER =====
-    Graphics2D world = (Graphics2D) g2.create();
+        // ===== WORLD LAYER =====
+        Graphics2D world = (Graphics2D) g2.create();
 
-    if (mapId == 3) {
-        world.translate(-cameraX, 0);
-    }
+        if (mapId == 3){
+            world.translate(-cameraX, 0);
+        }
 
-    drawBattleBackground(world);
+        drawBattleBackground(world);
 
-    if (player != null) {
-
-        for (Soldier s : soldiers) {
-            if (s.isAlive()) {
-                s.draw(world);
+        if (player != null){
+            for (Soldier s : soldiers) {
+                if (s.isAlive()){
+                    s.draw(world);
+                }
             }
-        }
-
-        for (MiniBoss mb : miniBosses) {
-            if (mb.isAlive()) {
-                mb.draw(world);
+            for (MiniBoss mb : miniBosses) {
+                if (mb.isAlive()) {
+                    mb.draw(world);
+                }
             }
+            if (finalBoss != null && finalBoss.isAlive()) {
+                finalBoss.draw(world);
+            }
+            player.draw(world);
         }
 
-        if (finalBoss != null && finalBoss.isAlive()) {
-            finalBoss.draw(world);
+        // finish area
+        if (mapId == 3 && !miniBossSpawned && finishArea != null) {
+
+            world.setColor(new Color(255, 215, 0, 120));
+            world.fillRect(finishArea.x,finishArea.y,finishArea.width,finishArea.height);
+            world.setColor(Color.YELLOW);
+            world.drawRect(finishArea.x,finishArea.y,finishArea.width,finishArea.height);
         }
 
-        player.draw(world);
+        world.dispose();
+
+        // ===== UI LAYER =====
+        for (DamageText d : damageTexts) {
+            d.draw(g2);
+        }
+
+        drawHUD(g2);
+
+        if (state == State.WIN) {
+            drawEndOverlay(g2, true);
+        } else if (state == State.LOSE) {
+            drawEndOverlay(g2, false);
+        }
+
+        if (notifTimer > 0) {
+            drawNotif(g2);
+        }
+
+        g2.dispose();
     }
-
-    // finish area
-    if (mapId == 3 && !miniBossSpawned && finishArea != null) {
-
-        world.setColor(new Color(255, 215, 0, 120));
-        world.fillRect(
-            finishArea.x,
-            finishArea.y,
-            finishArea.width,
-            finishArea.height
-        );
-
-        world.setColor(Color.YELLOW);
-        world.drawRect(
-            finishArea.x,
-            finishArea.y,
-            finishArea.width,
-            finishArea.height
-        );
-    }
-
-    world.dispose();
-
-    // ===== UI LAYER =====
-    for (DamageText d : damageTexts) {
-        d.draw(g2);
-    }
-
-    drawHUD(g2);
-
-    if (state == State.WIN) {
-        drawEndOverlay(g2, true);
-    } else if (state == State.LOSE) {
-        drawEndOverlay(g2, false);
-    }
-
-    if (notifTimer > 0) {
-        drawNotif(g2);
-    }
-
-    g2.dispose();
-}
 
     private void drawBattleBackground(Graphics2D g2) {
-        int currentWidth = (mapId == 3)
-                ? WORLD_W
-                : MAP_W;
+        int currentWidth = (mapId == 3) ? WORLD_W : MAP_W;
 
         // Tilted dark ground
         Color groundColor;
@@ -738,8 +681,14 @@ protected void paintComponent(Graphics g) {
         if (mapId == 2) {
             int secLeft = Math.max(0, (SURVIVAL_TARGET - survivalTicks) / 60);
             g2.setFont(new Font("Serif", Font.BOLD, 18));
-            g2.setColor(secLeft < 5 ? COL_RED_LIGHT : COL_GOLD);
-            g2.drawString("WAKTU: " + secLeft + "s", 270, MAP_H + 42);
+            if (secLeft > 0) {
+                g2.setColor(secLeft < 5 ? COL_RED_LIGHT : COL_GOLD);
+                g2.drawString("WAKTU: " + secLeft + "s", 270, MAP_H + 42);
+            } else {
+                // Jika waktu habis, teks berubah memberi petunjuk baru
+                g2.setColor(COL_RED_LIGHT);
+                g2.drawString("PERINGATAN: KALAHKAN MINI BOSS!", 270, MAP_H + 42);
+            }
         }
 
         // Boss HP
@@ -795,6 +744,121 @@ protected void paintComponent(Graphics g) {
         int nx = MAP_W / 2 - g2.getFontMetrics().stringWidth(notifText) / 2;
         g2.drawString(notifText, nx, 80);
     }
+    
+    private void applyEnemySteeringAndSeparation() {
+        // Interface lokal untuk menyatukan akses posisi tanpa mengubah class asli musuh
+        interface GameEntity {
+            float getX();
+            float getY();
+            void setX(float x);
+            void setY(float y);
+            float getRadius(); // Ukuran fisik objek (Soldier kecil, Boss besar)
+        }
+
+        List<GameEntity> activeEnemies = new ArrayList<>();
+
+        // 1. Bungkus semua Soldier yang masih hidup
+        for (Soldier s : soldiers) {
+            if (s.isAlive()) {
+                activeEnemies.add(new GameEntity() {
+                    public float getX() { return s.getX(); }
+                    public float getY() { return s.getY(); }
+                    public void setX(float x) { s.setX(x); }
+                    public void setY(float y) { s.setY(y); }
+                    public float getRadius() { return 22f; } // Radius tubuh soldier
+                    
+                    public void takeDamage(int dmg) { // Sesuaikan nama method damage game kamu
+                        s.takeDamage(dmg); // Salurkan damage ke soldier asli
+                    }
+                });
+            }
+        }
+
+        // 2. Bungkus semua MiniBoss yang masih hidup
+        for (MiniBoss mb : miniBosses) {
+            if (mb.isAlive()) {
+                activeEnemies.add(new GameEntity() {
+                    public float getX() { return mb.getX(); }
+                    public float getY() { return mb.getY(); }
+                    public void setX(float x) { mb.setX(x); }
+                    public void setY(float y) { mb.setY(y); }
+                    public float getRadius() { return 35f; } // MiniBoss lebih besar
+                    
+                    public void takeDamage(int dmg) { // Sesuaikan nama method damage game kamu
+                        mb.takeDamage(dmg); // Salurkan damage ke Mini Boss asli
+                    }
+                });
+            }
+        }
+
+        // 3. Bungkus FinalBoss jika ada dan masih hidup
+        if (finalBoss != null && finalBoss.isAlive()) {
+            activeEnemies.add(new GameEntity() {
+                public float getX() { return finalBoss.getX(); }
+                public float getY() { return finalBoss.getY(); }
+                public void setX(float x) { finalBoss.setX(x); }
+                public void setY(float y) { finalBoss.setY(y); }
+                public float getRadius() { return 55f; } // FinalBoss paling besar
+            });
+        }
+
+        float pX = player.getX();
+        float pY = player.getY();
+
+        // ===== TAHAP 1: MELINGKARI & JAGA JARAK DENGAN PLAYER =====
+        for (GameEntity e : activeEnemies) {
+            float dx = e.getX() - pX;
+            float dy = e.getY() - pY;
+            float dist = (float) Math.sqrt(dx * dx + dy * dy);
+
+            // Jarak serang ideal (agar berhenti tepat di luar tubuh player)
+            float attackRange = e.getRadius() + 20f; 
+
+            if (dist > 0) {
+                // Jika musuh merangsek terlalu dekat/menembus player, dorong ke batas luar ring
+                if (dist < attackRange) {
+                    e.setX(pX + (dx / dist) * attackRange);
+                    e.setY(pY + (dy / dist) * attackRange);
+                }
+
+                // LOGIKA MEMUTARI (Gaya Tangensial)
+                // Menggeser posisi musuh tegak lurus dari arah player, menciptakan efek orbit/putaran
+                float orbitSpeed = 0.6f; // Atur angka ini untuk mempercepat/memperlambat putaran melingkar
+                float tangentX = -dy / dist * orbitSpeed;
+                float tangentY = dx / dist * orbitSpeed;
+
+                e.setX(e.getX() + tangentX);
+                e.setY(e.getY() + tangentY);
+            }
+        }
+
+        // ===== TAHAP 2: SEPARATION (ANTI-BERTUMPUK ANTAR MUSUH) =====
+        for (int i = 0; i < activeEnemies.size(); i++) {
+            GameEntity e1 = activeEnemies.get(i);
+            for (int j = i + 1; j < activeEnemies.size(); j++) {
+                GameEntity e2 = activeEnemies.get(j);
+
+                float dx = e1.getX() - e2.getX();
+                float dy = e1.getY() - e2.getY();
+                float dist = (float) Math.sqrt(dx * dx + dy * dy);
+
+                // Batas jarak minimal antar kedua musuh tersebut
+                float minDist = e1.getRadius() + e2.getRadius() + 10f; // +10f untuk jarak renggang ekstra
+
+                if (dist < minDist && dist > 0) {
+                    float overlap = minDist - dist;
+                    // Dorong kedua musuh berlawanan arah secara adil (masing-masing setengah overlap)
+                    float pushX = (dx / dist) * (overlap / 2f);
+                    float pushY = (dy / dist) * (overlap / 2f);
+
+                    e1.setX(e1.getX() + pushX);
+                    e1.setY(e1.getY() + pushY);
+                    e2.setX(e2.getX() - pushX);
+                    e2.setY(e2.getY() - pushY);
+                }
+            }
+        }
+    }
 
     // ===========================
     // INPUT
@@ -803,17 +867,7 @@ protected void paintComponent(Graphics g) {
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-       
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_W:
-                    case KeyEvent.VK_UP:
-                        keyUp = true;
-                        break;
-
-                    case KeyEvent.VK_S:
-                    case KeyEvent.VK_DOWN:
-                        keyDown = true;
-                        break;
                     case KeyEvent.VK_A:
                     case KeyEvent.VK_LEFT:
                         keyLeft = true;
@@ -834,15 +888,7 @@ protected void paintComponent(Graphics g) {
 
             @Override
             public void keyReleased(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_W:
-                    case KeyEvent.VK_UP:
-                        keyUp = false;
-                        break;
-                    case KeyEvent.VK_S:
-                    case KeyEvent.VK_DOWN:
-                        keyDown = false;
-                        break;
+                switch (e.getKeyCode()){
                     case KeyEvent.VK_A:
                     case KeyEvent.VK_LEFT:
                         keyLeft = false;

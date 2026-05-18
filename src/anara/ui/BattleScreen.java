@@ -85,6 +85,11 @@ public void addNotify() {
         finalBoss = null;
         damageTexts.clear();
         miniBossSpawned = false;
+        // BUG FIX #3: Reset bossSpawnCooldown saat battle dimulai / retry
+        // Sebelumnya tidak direset, sehingga saat retry nilai bisa negatif
+        // dan boss langsung memanggil pasukan begitu muncul.
+        bossSpawnCooldown = 300;
+        finalBossAppeared = false;
 
         PlayerData pd = GameEngine.getInstance().getCurrentPlayer();
 
@@ -109,7 +114,7 @@ initMap();
             case 1:
                 // 5 soldiers + 1 mini boss
                 spawnSoldiers(5, 1);
-                // spawnMiniBosses(1);
+                // Mini boss akan muncul via checkWinLose() setelah semua soldier mati
                 break;
             case 2:
                 // Endless spawn, survival 15 sec
@@ -137,12 +142,12 @@ initMap();
                 break;
 
             case 4:
-                // Final Boss
+                // Final Boss — mulai dengan pasukan penjaga
                 spawnSoldiers(6, 2);
-
-finalBoss = null;
-
-finalBossAppeared = false;
+                finalBoss = null;
+                finalBossAppeared = false;
+                // BUG FIX #3 (bagian initMap): Pastikan cooldown boss spawn dimulai dari 300
+                bossSpawnCooldown = 300;
                 showNotif("FINAL BOSS — HADAPI TAKDIRMU!", 180);
                 break;
         }
@@ -159,28 +164,31 @@ finalBossAppeared = false;
     }
 }
 
+    // BUG FIX #1: spawnMiniBosses() sebelumnya selalu return dini karena
+    // guard "if (finishArea == null) return;" — padahal finishArea hanya diset
+    // di Map 3, sehingga mini boss TIDAK PERNAH muncul di Map 1 dan Map 2.
+    // Fix: gunakan posisi fallback berbasis MAP_W/MAP_H jika finishArea null.
     private void spawnMiniBosses(int count) {
-
-        if (finishArea == null) {
-            return;
-        }
-
         miniBosses.clear();
 
-        float baseX = finishArea.x - 200;
+        float baseX, baseY0, baseY1;
 
-        float[] xs = {
-            baseX,
-            baseX + 120
-        };
+        if (finishArea != null) {
+            // Map 3: spawn di depan garis finish
+            baseX  = finishArea.x - 200;
+            baseY0 = 180;
+            baseY1 = MAP_H - 180;
+        } else {
+            // Map 1 & Map 2: spawn di tengah-kanan arena
+            baseX  = MAP_W * 0.65f;
+            baseY0 = MAP_H * 0.30f;
+            baseY1 = MAP_H * 0.70f;
+        }
 
-        float[] ys = {
-            180,
-            MAP_H - 180
-        };
+        float[] xs = { baseX, baseX + 120 };
+        float[] ys = { baseY0, baseY1 };
 
         for (int i = 0; i < count; i++) {
-
             miniBosses.add(
                     new MiniBoss(
                             xs[i % xs.length],
@@ -190,7 +198,6 @@ finalBossAppeared = false;
         }
 
         miniBossSpawned = true;
-
         showNotif("MINI BOSS MUNCUL!", 120);
     }
 
@@ -249,7 +256,9 @@ repaint ();
                 spawnCooldown = 120; // tiap ±2 detik
             }
 
-            // Sampai finish → munculkan mini boss
+            // Sampai finish → munculkan 2 mini boss
+            // BUG FIX #4: Sebelumnya hanya spawn 1 MiniBoss, padahal nama map
+            // dan deskripsi menyebut "DUA MINI BOSS". Sekarang spawn 2.
             if (player.getX() >= WORLD_W - 200
                     && !miniBossSpawned) {
 
@@ -258,13 +267,20 @@ repaint ();
                 miniBosses.add(
                         new MiniBoss(
                                 WORLD_W - 100,
-                                MAP_H / 2f
+                                MAP_H / 2f - 80   // Mini Boss pertama, atas tengah
+                        )
+                );
+
+                miniBosses.add(
+                        new MiniBoss(
+                                WORLD_W - 100,
+                                MAP_H / 2f + 80   // Mini Boss kedua, bawah tengah
                         )
                 );
 
                 miniBossSpawned = true;
 
-                showNotif("MINI BOSS MUNCUL!", 120);
+                showNotif("2 MINI BOSS MUNCUL!", 120);
             }
         }
         // ===== MAP 4 PHASE SYSTEM =====
@@ -395,33 +411,24 @@ if (mapId == 4) {
         switch (mapId) {
 
             case 1:
-                //semua soldier mati -> spawn mini boss
+                // Semua soldier mati → spawn mini boss
                 if (soldiers.stream().noneMatch(s -> s.isAlive()) && miniBosses.isEmpty()) {
-
                     spawnMiniBosses(1);
-//                showNotif("MINI BOSS MUNCUL!", 120);
                 }
 
-                // menang kalau mini boss mati
+                // Menang kalau mini boss mati
                 boolean bossDead = miniBosses.stream().noneMatch(mb -> mb.isAlive());
-
                 if (!miniBosses.isEmpty() && bossDead) {
                     endBattle(true);
                 }
-
                 break;
 
-//            case 1:
-//                boolean allDead = soldiers.stream().noneMatch(s -> s.isAlive())
-//                               && miniBosses.stream().noneMatch(mb -> mb.isAlive());
-//                if (allDead) endBattle(true);
-//                break;
             case 2:
-
                 if (survivalTicks >= SURVIVAL_TARGET) {
                     endBattle(true);
                 }
                 break;
+
             case 3:
                 boolean miniBossDead
                         = miniBosses.stream()
@@ -431,23 +438,17 @@ if (mapId == 4) {
                     endBattle(true);
                 }
                 break;
+
+            // BUG FIX #2: Case 4 sebelumnya TIDAK memiliki kondisi apapun —
+            // seluruh isi case langsung dieksekusi setiap tick (±60x/detik),
+            // yang menyebabkan: posisi player direset, 6 soldier baru di-spawn,
+            // finalBoss dihapus, dan flag direset — setiap frame.
+            // Map 4 jadi mustahil dimainkan. Fix: tambahkan kondisi yang benar:
+            // menang jika final boss sudah muncul dan sudah mati.
             case 4:
-             
-
-    player.setX(MAP_W / 2f);
-    player.setY(MAP_H - 120);
-
-    spawnSoldiers(6, 2);
-
-    finalBoss = null;
-
-    finalBossAppeared = false;
-
-    bossSpawnCooldown = 300;
-
-    showNotif("BASMI PASUKAN PENJAGA!", 180);
-
-    
+                if (finalBossAppeared && finalBoss != null && !finalBoss.isAlive()) {
+                    endBattle(true);
+                }
                 break;
         }
     }

@@ -19,22 +19,37 @@ public class FinalBoss extends Entity {
     @Override
     public void update(float targetX, float targetY, int mapW, int mapH) {
         animPhase += 0.05f;
+
+        // Phase 2 aktif saat HP < 50%: boss bergerak & menyerang lebih kencang
         if (getHpRatio() < 0.5f && phase == 1) {
             phase = 2;
-            speed = 2;
             attack = 50;
         }
-        if (isEnraged()) {
-    speed = 5;
-    attack = 30;
-}
+
+        // BUG FIX #5: Blok isEnraged() di bawah ini sebelumnya ada dan
+        // meng-override attack dari 50 kembali ke 30 saat HP < 30%,
+        // sehingga boss justru LEBIH LEMAH di fase kritis. Blok itu dihapus.
+        // isEnraged() (HP < 30%) sekarang hanya dipakai untuk efek visual
+        // dan label "MENGAMUK!" di draw(), bukan untuk mengubah stats.
+
         float dx = targetX - x, dy = targetY - y;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
-        float spd = phase == 2 ? 2.5f : 1.5f;
+
+        // Speed pergerakan meningkat di phase 2; lebih cepat lagi saat enraged
+        float spd;
+        if (isEnraged()) {
+            spd = 3.5f;  // HP < 30%: paling cepat
+        } else if (phase == 2) {
+            spd = 2.5f;  // HP 30-50%: cepat
+        } else {
+            spd = 1.5f;  // HP > 50%: normal
+        }
+
         this.x += (dx / dist) * spd;
         this.y += (dy / dist) * spd;
         this.x = Math.max(50, Math.min(mapW - 50, this.x));
         this.y = Math.max(50, Math.min(mapH - 50, this.y));
+
         if (attackCooldown > 0) {
             attackCooldown--;
         }
@@ -62,6 +77,7 @@ public class FinalBoss extends Entity {
         return attack * 2;
     }
 
+    // isEnraged: HP < 30% — digunakan untuk efek visual dan kecepatan
     public boolean isEnraged() {
         return hp < maxHp * 0.3f;
     }

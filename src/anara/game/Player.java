@@ -129,6 +129,7 @@ public class Player extends Entity {
 
     @Override
     public void draw(Graphics2D g2) {
+        Graphics2D p = (Graphics2D) g2.create();
         float anim = animPhase;
         int cx = (int) x, cy = (int) y;
 
@@ -136,37 +137,67 @@ public class Player extends Entity {
             return;
         }
 
-        g2.setColor(new Color(0, 0, 0, 80));
-        g2.fillOval(cx - 18, cy + 18, 36, 12);
+        p.setColor(new Color(0, 0, 0, 80));
+    p.fillOval(cx - 18, cy + 18, 36, 12);
 
-        g2.setColor(new Color(80, 55, 30));
-        g2.fillOval(cx - 16, cy - 16, 32, 32);
-        g2.setColor(new Color(110, 80, 45));
-        g2.fillOval(cx - 10, cy - 12, 20, 15);
+    p.setColor(new Color(80, 55, 30));
+    p.fillOval(cx - 16, cy - 16, 32, 32);
 
-        g2.setColor(new Color(200, 170, 130));
-        g2.fillOval(cx - 9, cy - 26, 18, 18);
+    p.setColor(new Color(110, 80, 45));
+    p.fillOval(cx - 10, cy - 12, 20, 15);
 
-        g2.setColor(new Color(70, 50, 20));
-        float swing = (float) Math.sin(anim) * 5f;
-        int[] px = {cx - 3, cx + 3, cx + 2 + (int) swing, cx - 2 + (int) swing};
-        int[] py = {cy - 20, cy - 20, cy + 18, cy + 18};
-        g2.fillPolygon(px, py, 4);
+    p.setColor(new Color(200, 170, 130));
+    p.fillOval(cx - 9, cy - 26, 18, 18);
 
-        g2.rotate(angle + Math.PI / 2, cx, cy);
-        if (isAttacking) {
-            float swingA = (float) (attackFrame / 12.0 * Math.PI);
-            g2.rotate(swingA - Math.PI / 3, cx, cy);
-        }
-        g2.setColor(new Color(170, 170, 190));
-        g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.drawLine(cx, cy - 14, cx, cy + 32);
-        g2.setColor(new Color(180, 150, 60));
-        g2.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.drawLine(cx - 7, cy + 28, cx + 7, cy + 38);
-        g2.rotate(-(angle + Math.PI / 2), cx, cy);
-        if (isAttacking) {
-            g2.rotate(-(attackFrame / 12.0 * Math.PI - Math.PI / 3), cx, cy);
-        }
+    p.setColor(new Color(70, 50, 20));
+
+    float swing = (float) Math.sin(anim) * 5f;
+
+    int[] px = {
+        cx - 3,
+        cx + 3,
+        cx + 2 + (int) swing,
+        cx - 2 + (int) swing
+    };
+
+    int[] py = {
+        cy - 20,
+        cy - 20,
+        cy + 18,
+        cy + 18
+    };
+
+    p.fillPolygon(px, py, 4);
+
+    p.rotate(angle + Math.PI / 2, cx, cy);
+
+    if (isAttacking) {
+
+        float swingA = (float) (attackFrame / 12.0 * Math.PI);
+
+        p.rotate(swingA - Math.PI / 3, cx, cy);
+    }
+
+    p.setColor(new Color(170, 170, 190));
+
+    p.setStroke(new BasicStroke(
+            3f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND
+    ));
+
+    p.drawLine(cx, cy - 14, cx, cy + 32);
+
+    p.setColor(new Color(180, 150, 60));
+
+    p.setStroke(new BasicStroke(
+            6f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND
+    ));
+
+    p.drawLine(cx - 7, cy + 28, cx + 7, cy + 38);
+
+    p.dispose();
     }
 }

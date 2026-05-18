@@ -50,44 +50,66 @@ public class MiniBoss extends Entity {
 
     @Override
     public void draw(Graphics2D g2) {
-        int cx = (int) x, cy = (int) y;
-        float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
+        Graphics2D p = (Graphics2D) g2.create();
 
-        // Aura
-        g2.setColor(new Color(180, 40, 40, (int) (glow * 50)));
-        g2.fillOval(cx - 32, cy - 32, 64, 64);
+    int cx = (int) x, cy = (int) y;
 
-        // Body
-        g2.setColor(new Color(80, 20, 20));
-        g2.fillOval(cx - 22, cy - 22, 44, 44);
-        g2.setColor(new Color(120, 30, 30));
-        g2.fillOval(cx - 14, cy - 16, 28, 20);
+    float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
 
-        // Horns
-        g2.setColor(new Color(60, 15, 15));
-        g2.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.drawLine(cx - 12, cy - 22, cx - 18, cy - 38);
-        g2.drawLine(cx + 12, cy - 22, cx + 18, cy - 38);
+    // Aura
+    p.setColor(new Color(180, 40, 40, (int) (glow * 50)));
+    p.fillOval(cx - 32, cy - 32, 64, 64);
 
-        // Eyes
-        g2.setColor(new Color(255, 100, 0));
-        g2.fillOval(cx - 8, cy - 18, 7, 7);
-        g2.fillOval(cx + 1, cy - 18, 7, 7);
+    // Body
+    p.setColor(new Color(80, 20, 20));
+    p.fillOval(cx - 22, cy - 22, 44, 44);
 
-        // HP
-        g2.setColor(new Color(40, 10, 10));
-        g2.fillRect(cx - 28, cy + 28, 56, 7);
-        g2.setColor(new Color(200, 40, 40));
-        g2.fillRect(cx - 28, cy + 28, (int) (56 * getHpRatio()), 7);
-        g2.setColor(new Color(80, 20, 20));
-        g2.setStroke(new BasicStroke(1f));
-        g2.drawRect(cx - 28, cy + 28, 56, 7);
+    p.setColor(new Color(120, 30, 30));
+    p.fillOval(cx - 14, cy - 16, 28, 20);
 
-        // Label
-        g2.setFont(new Font("Serif", Font.BOLD, 9));
-        g2.setColor(COL_RED);
-        g2.drawString("MINI BOSS", cx - 22, cy + 26);
-    }
+    // Horns
+    p.setColor(new Color(60, 15, 15));
+
+    p.setStroke(new BasicStroke(
+            4f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND
+    ));
+
+    p.drawLine(cx - 12, cy - 22, cx - 18, cy - 38);
+    p.drawLine(cx + 12, cy - 22, cx + 18, cy - 38);
+
+    // Eyes
+    p.setColor(new Color(255, 100, 0));
+
+    p.fillOval(cx - 8, cy - 18, 7, 7);
+    p.fillOval(cx + 1, cy - 18, 7, 7);
+
+    // HP
+    p.setColor(new Color(40, 10, 10));
+    p.fillRect(cx - 28, cy + 28, 56, 7);
+
+    p.setColor(new Color(200, 40, 40));
+    p.fillRect(
+            cx - 28,
+            cy + 28,
+            (int) (56 * getHpRatio()),
+            7
+    );
+
+    p.setColor(new Color(80, 20, 20));
+    p.setStroke(new BasicStroke(1f));
+    p.drawRect(cx - 28, cy + 28, 56, 7);
+
+    // Label
+    p.setFont(new Font("Serif", Font.BOLD, 9));
+
+    p.setColor(COL_RED);
+
+    p.drawString("MINI BOSS", cx - 22, cy + 26);
+
+    p.dispose();
+}
 
     private static final Color COL_RED = new Color(220, 80, 80);
 }

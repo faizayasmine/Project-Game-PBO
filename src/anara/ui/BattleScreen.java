@@ -546,88 +546,87 @@ if (mapId == 4) {
     // RENDER
     // ===========================
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
 
-//        drawBattleBackground(g2);
-        if (mapId == 3) {
-            g2.translate(-cameraX, 0);
-        }
-        drawBattleBackground(g2);
+    Graphics2D g2 = (Graphics2D) g.create();
 
-        if (player != null) {
+    g2.setRenderingHint(
+        RenderingHints.KEY_ANTIALIASING,
+        RenderingHints.VALUE_ANTIALIAS_ON
+    );
 
-            for (Soldier s : soldiers) {
-                if (s.isAlive()) {
-                    s.draw(g2);
-                }
-            }
+    // ===== WORLD LAYER =====
+    Graphics2D world = (Graphics2D) g2.create();
 
-            for (MiniBoss mb : miniBosses) {
-                if (mb.isAlive()) {
-                    mb.draw(g2);
-                }
-            }
-
-            if (finalBoss != null && finalBoss.isAlive()) {
-                finalBoss.draw(g2);
-            }
-
-            player.draw(g2);
-        }
-
-        // Damage texts
-        for (DamageText d : damageTexts) {
-            d.draw(g2);
-        }
-        // HUD
-        if (mapId == 3) {
-            g2.translate(cameraX, 0);
-        }
-
-        // Win/Lose overlay
-        if (state == State.WIN) {
-            drawEndOverlay(g2, true);
-        } else if (state == State.LOSE) {
-            drawEndOverlay(g2, false);
-        }
-
-        // Notification
-        if (notifTimer > 0) {
-            drawNotif(g2);
-        }
-        // ===== DRAW FINISH AREA =====
-        if (mapId == 3 && !miniBossSpawned && finishArea != null) {
-
-            g2.setColor(new Color(255, 215, 0, 120));
-            g2.fillRect(
-                    finishArea.x,
-                    finishArea.y,
-                    finishArea.width,
-                    finishArea.height
-            );
-
-            g2.setColor(Color.YELLOW);
-            g2.drawRect(
-                    finishArea.x,
-                    finishArea.y,
-                    finishArea.width,
-                    finishArea.height
-            );
-
-            g2.setFont(new Font("Serif", Font.BOLD, 18));
-            g2.drawString(
-                    "FINISH",
-                    finishArea.x + 5,
-                    finishArea.y - 10
-            );
-
-        }
-
-        g2.dispose();
+    if (mapId == 3) {
+        world.translate(-cameraX, 0);
     }
+
+    drawBattleBackground(world);
+
+    if (player != null) {
+
+        for (Soldier s : soldiers) {
+            if (s.isAlive()) {
+                s.draw(world);
+            }
+        }
+
+        for (MiniBoss mb : miniBosses) {
+            if (mb.isAlive()) {
+                mb.draw(world);
+            }
+        }
+
+        if (finalBoss != null && finalBoss.isAlive()) {
+            finalBoss.draw(world);
+        }
+
+        player.draw(world);
+    }
+
+    // finish area
+    if (mapId == 3 && !miniBossSpawned && finishArea != null) {
+
+        world.setColor(new Color(255, 215, 0, 120));
+        world.fillRect(
+            finishArea.x,
+            finishArea.y,
+            finishArea.width,
+            finishArea.height
+        );
+
+        world.setColor(Color.YELLOW);
+        world.drawRect(
+            finishArea.x,
+            finishArea.y,
+            finishArea.width,
+            finishArea.height
+        );
+    }
+
+    world.dispose();
+
+    // ===== UI LAYER =====
+    for (DamageText d : damageTexts) {
+        d.draw(g2);
+    }
+
+    drawHUD(g2);
+
+    if (state == State.WIN) {
+        drawEndOverlay(g2, true);
+    } else if (state == State.LOSE) {
+        drawEndOverlay(g2, false);
+    }
+
+    if (notifTimer > 0) {
+        drawNotif(g2);
+    }
+
+    g2.dispose();
+}
 
     private void drawBattleBackground(Graphics2D g2) {
         int currentWidth = (mapId == 3)

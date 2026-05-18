@@ -35,29 +35,49 @@ public class Soldier extends Entity {
 
         @Override
         public void draw(Graphics2D g2) {
-            int cx = (int) x, cy = (int) y;
-            g2.setColor(new Color(0, 0, 0, 60));
-            g2.fillOval(cx - 14, cy + 12, 28, 10);
-            g2.setColor(bodyColor);
-            g2.fillOval(cx - 13, cy - 13, 26, 26);
-            g2.setColor(new Color(100, 90, 80));
-            g2.fillOval(cx - 7, cy - 20, 14, 14);
-            // Spear
-            g2.setColor(new Color(120, 100, 60));
-            g2.setStroke(new BasicStroke(2f));
-            g2.drawLine(cx + 10, cy - 28, cx + 10, cy + 20);
-            g2.setColor(new Color(160, 160, 180));
-            g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g2.drawLine(cx + 8, cy - 28, cx + 12, cy - 20);
-            // HP bar
-            drawEntityHP(g2, cx, cy, 28, getHpRatio());
-        }
+            Graphics2D p = (Graphics2D) g2.create();
+            p.setRenderingHint(
+    java.awt.RenderingHints.KEY_ANTIALIASING,
+    java.awt.RenderingHints.VALUE_ANTIALIAS_ON
+);
+
+    int cx = (int) x, cy = (int) y;
+
+    p.setColor(new Color(0, 0, 0, 60));
+    p.fillOval(cx - 14, cy + 12, 28, 10);
+
+    p.setColor(bodyColor);
+   p.fillRoundRect(cx - 11, cy - 13, 22, 26, 8, 8);
+
+    p.setColor(new Color(100, 90, 80));
+    p.fillOval(cx - 7, cy - 20, 14, 14);
+
+    // Spear
+    p.setColor(new Color(120, 100, 60));
+    p.setStroke(new BasicStroke(1.5f));
+   p.drawLine(cx + 4, cy - 18, cx + 12, cy + 10);
+
+    p.setColor(new Color(160, 160, 180));
+
+    p.setStroke(new BasicStroke(
+            3f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND
+    ));
+
+   p.drawLine(cx + 3, cy - 18, cx + 10, cy - 12);
+   
+    // HP bar
+   drawEntityHP(p, cx, cy, 18, getHpRatio());
+
+    p.dispose();
+}
 
         private void drawEntityHP(Graphics2D g2, int cx, int cy, int w, float ratio) {
             g2.setColor(new Color(40, 10, 10));
-            g2.fillRect(cx - w / 2, cy - 32, w, 5);
+          g2.fillRect(cx - w / 2, cy - 24, w, 4);
             g2.setColor(new Color(200, 40, 40));
-            g2.fillRect(cx - w / 2, cy -32, (int)(w * ratio), 5);
+   g2.fillRect(cx - w / 2, cy -24, (int)(w * ratio), 4);
         }
     }
 

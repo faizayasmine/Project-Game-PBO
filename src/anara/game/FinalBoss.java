@@ -68,56 +68,132 @@ public class FinalBoss extends Entity {
 
     @Override
     public void draw(Graphics2D g2) {
-        int cx = (int) x, cy = (int) y;
-        float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
-        boolean enraged = isEnraged();
+         Graphics2D p = (Graphics2D) g2.create();
 
-        // Outer aura
-        Color auraColor = enraged ? new Color(200, 50, 200, (int) (glow * 60)) : new Color(50, 50, 180, (int) (glow * 50));
-        g2.setColor(auraColor);
-        g2.fillOval(cx - 55, cy - 55, 110, 110);
+    int cx = (int) x, cy = (int) y;
 
-        // Body
-        Color bodyCol = enraged ? new Color(100, 20, 100) : new Color(20, 20, 80);
-        g2.setColor(bodyCol);
-        g2.fillOval(cx - 38, cy - 38, 76, 76);
-        g2.setColor(enraged ? new Color(140, 40, 140) : new Color(40, 40, 120));
-        g2.fillOval(cx - 24, cy - 28, 48, 35);
+    float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
 
-        // Crown/Helmet spikes
-        g2.setColor(enraged ? new Color(180, 60, 0) : new Color(100, 90, 50));
-        g2.setStroke(new BasicStroke(5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        for (int i = -2; i <= 2; i++) {
-            int sx = cx + i * 12;
-            g2.drawLine(sx, cy - 38, sx + i * 3, cy - 55 - Math.abs(i) * 5);
-        }
+    boolean enraged = isEnraged();
 
-        // Eyes (glowing)
-        Color eyeCol = enraged ? new Color(255, 0, 255) : new Color(100, 100, 255);
-        g2.setColor(eyeCol);
-        g2.fillOval(cx - 14, cy - 24, 10, 10);
-        g2.fillOval(cx + 4, cy - 24, 10, 10);
-        g2.setColor(Color.WHITE);
-        g2.fillOval(cx - 11, cy - 21, 4, 4);
-        g2.fillOval(cx + 7, cy - 21, 4, 4);
+    // Outer aura
+    Color auraColor = enraged
+            ? new Color(200, 50, 200, (int) (glow * 60))
+            : new Color(50, 50, 180, (int) (glow * 50));
 
-        // Weapon — dark scythe
-        g2.setColor(new Color(80, 80, 100));
-        g2.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        double wAngle = animPhase;
-        int wx1 = cx + (int) (Math.cos(wAngle) * 30), wy1 = cy + (int) (Math.sin(wAngle) * 30);
-        int wx2 = cx + (int) (Math.cos(wAngle) * 60), wy2 = cy + (int) (Math.sin(wAngle) * 60);
-        g2.drawLine(wx1, wy1, wx2, wy2);
-        g2.setColor(new Color(160, 160, 190));
-        g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.drawArc(wx2 - 18, wy2 - 18, 36, 36, (int) Math.toDegrees(wAngle), 120);
+    p.setColor(auraColor);
+    p.fillOval(cx - 55, cy - 55, 110, 110);
 
-        // Enraged label
-        if (enraged) {
-            g2.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 10));
-            g2.setColor(new Color(255, 100, 255));
-            g2.drawString("MENGAMUK!", cx - 26, cy - 60);
-        }
+    // Body
+    Color bodyCol = enraged
+            ? new Color(100, 20, 100)
+            : new Color(20, 20, 80);
+
+    p.setColor(bodyCol);
+    p.fillOval(cx - 38, cy - 38, 76, 76);
+
+    p.setColor(
+            enraged
+                    ? new Color(140, 40, 140)
+                    : new Color(40, 40, 120)
+    );
+
+    p.fillOval(cx - 24, cy - 28, 48, 35);
+
+    // Crown / spikes
+    p.setColor(
+            enraged
+                    ? new Color(180, 60, 0)
+                    : new Color(100, 90, 50)
+    );
+
+    p.setStroke(new BasicStroke(
+            5f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND
+    ));
+
+    for (int i = -2; i <= 2; i++) {
+
+        int sx = cx + i * 12;
+
+        p.drawLine(
+                sx,
+                cy - 38,
+                sx + i * 3,
+                cy - 55 - Math.abs(i) * 5
+        );
     }
-}
 
+    // Eyes
+    Color eyeCol = enraged
+            ? new Color(255, 0, 255)
+            : new Color(100, 100, 255);
+
+    p.setColor(eyeCol);
+
+    p.fillOval(cx - 14, cy - 24, 10, 10);
+    p.fillOval(cx + 4, cy - 24, 10, 10);
+
+    p.setColor(Color.WHITE);
+
+    p.fillOval(cx - 11, cy - 21, 4, 4);
+    p.fillOval(cx + 7, cy - 21, 4, 4);
+
+    // Weapon
+    p.setColor(new Color(80, 80, 100));
+
+    p.setStroke(new BasicStroke(
+            4f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND
+    ));
+
+    double wAngle = animPhase;
+
+    int wx1 = cx + (int) (Math.cos(wAngle) * 30);
+    int wy1 = cy + (int) (Math.sin(wAngle) * 30);
+
+    int wx2 = cx + (int) (Math.cos(wAngle) * 60);
+    int wy2 = cy + (int) (Math.sin(wAngle) * 60);
+
+    p.drawLine(wx1, wy1, wx2, wy2);
+
+    p.setColor(new Color(160, 160, 190));
+
+    p.setStroke(new BasicStroke(
+            3f,
+            BasicStroke.CAP_ROUND,
+            BasicStroke.JOIN_ROUND
+    ));
+
+    p.drawArc(
+            wx2 - 18,
+            wy2 - 18,
+            36,
+            36,
+            (int) Math.toDegrees(wAngle),
+            120
+    );
+
+    // Enraged text
+    if (enraged) {
+
+        p.setFont(new Font(
+                "Serif",
+                Font.BOLD | Font.ITALIC,
+                10
+        ));
+
+        p.setColor(new Color(255, 100, 255));
+
+        p.drawString(
+                "MENGAMUK!",
+                cx - 26,
+                cy - 60
+        );
+    }
+
+    p.dispose();
+}
+}

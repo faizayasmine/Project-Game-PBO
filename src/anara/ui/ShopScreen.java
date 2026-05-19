@@ -13,7 +13,9 @@ import java.util.List;
 
 public class ShopScreen extends BasePanel {
 
-    private enum Tab { SHOP, INVENTORY }
+    private enum Tab {
+        SHOP, INVENTORY
+    }
     private Tab activeTab = Tab.SHOP;
     private int hoveredItem = -1;
     private int selectedItem = -1;
@@ -23,25 +25,25 @@ public class ShopScreen extends BasePanel {
 
     // Shop catalog
     private static final List<ShopItem> CATALOG = new ArrayList<>(Arrays.asList(
-        // Weapons
-        new ShopItem("w1", "Iron Starter", "Pedang standar bawaan Kael (+10 ATK)",  80,  10, ShopItem.ItemType.WEAPON),
-        new ShopItem("w2", "Void Breaker", "Logam kuno bereaksi energi kutukan (+20 ATK)", 200, 20, ShopItem.ItemType.WEAPON),
-        new ShopItem("w3", "Seal Breaker", "Melepaskan energi Pecahan Segel. (+25 SKL)", 350, 25, ShopItem.ItemType.WEAPON),
-        new ShopItem("w4", "Aruna's Wrath", "Diberkati cahaya (+35 ATK)", 80, 35,  ShopItem.ItemType.WEAPON),
-        // Skills
-        new ShopItem("s1", "Quickstrike", "Kurangi cooldown serangan (+5 SKL)", 100, 5, ShopItem.ItemType.SKILL),
-        new ShopItem("s2", "Windrage", "Serangan AoE memutar di sekitar Raka (+15 SKL)", 200, 15, ShopItem.ItemType.SKILL),
-        new ShopItem("s3", "Sealbreaker", "Melepaskan energi Pecahan Segel (+25 SKL)", 350, 25, ShopItem.ItemType.SKILL)
+            // Weapons
+            new ShopItem("w1", "Iron Starter", "Pedang standar bawaan Kael (+10 ATK)", 80, 10, ShopItem.ItemType.WEAPON),
+            new ShopItem("w2", "Void Breaker", "Logam kuno bereaksi energi kutukan (+20 ATK)", 200, 20, ShopItem.ItemType.WEAPON),
+            new ShopItem("w3", "Seal Breaker", "Melepaskan energi Pecahan Segel. (+25 SKL)", 350, 25, ShopItem.ItemType.WEAPON),
+            new ShopItem("w4", "Aruna's Wrath", "Diberkati cahaya (+35 ATK)", 80, 35, ShopItem.ItemType.WEAPON),
+            // Skills
+            new ShopItem("s1", "Quickstrike", "Kurangi cooldown serangan (+5 SKL)", 100, 5, ShopItem.ItemType.SKILL),
+            new ShopItem("s2", "Windrage", "Serangan AoE memutar di sekitar Raka (+15 SKL)", 200, 15, ShopItem.ItemType.SKILL),
+            new ShopItem("s3", "Sealbreaker", "Melepaskan energi Pecahan Segel (+25 SKL)", 350, 25, ShopItem.ItemType.SKILL)
     ));
 
     public ShopScreen() {
         setupMouseListeners();
         uiTimer = new javax.swing.Timer(100, e -> {
-    if (statusTimer > 0) {
-        statusTimer--;
-        repaint();
-    }
-});
+            if (statusTimer > 0) {
+                statusTimer--;
+                repaint();
+            }
+        });
         uiTimer.start();
     }
 
@@ -51,7 +53,9 @@ public class ShopScreen extends BasePanel {
             public void mouseMoved(MouseEvent e) {
                 int prev = hoveredItem;
                 hoveredItem = getItemAt(e.getX(), e.getY());
-                if (prev != hoveredItem) repaint();
+                if (prev != hoveredItem) {
+                    repaint();
+                }
             }
         });
 
@@ -59,8 +63,18 @@ public class ShopScreen extends BasePanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 // Tab switching
-                if (getShopTabRect().contains(e.getPoint())) { activeTab = Tab.SHOP; selectedItem = -1; repaint(); return; }
-                if (getInvTabRect().contains(e.getPoint())) { activeTab = Tab.INVENTORY; selectedItem = -1; repaint(); return; }
+                if (getShopTabRect().contains(e.getPoint())) {
+                    activeTab = Tab.SHOP;
+                    selectedItem = -1;
+                    repaint();
+                    return;
+                }
+                if (getInvTabRect().contains(e.getPoint())) {
+                    activeTab = Tab.INVENTORY;
+                    selectedItem = -1;
+                    repaint();
+                    return;
+                }
 
                 // Back
                 if (getBackRect().contains(e.getPoint())) {
@@ -69,7 +83,10 @@ public class ShopScreen extends BasePanel {
                 }
 
                 int idx = getItemAt(e.getX(), e.getY());
-                if (idx >= 0) { selectedItem = idx; repaint(); }
+                if (idx >= 0) {
+                    selectedItem = idx;
+                    repaint();
+                }
 
                 // Action buttons
                 handleActionButtons(e.getX(), e.getY());
@@ -81,34 +98,50 @@ public class ShopScreen extends BasePanel {
         List<?> list = activeTab == Tab.SHOP ? CATALOG : GameEngine.getInstance().getCurrentPlayer().getInventory();
         for (int i = 0; i < list.size(); i++) {
             Rectangle r = getItemRect(i);
-            if (r.contains(mx, my)) return i;
+            if (r.contains(mx, my)) {
+                return i;
+            }
         }
         return -1;
     }
 
     private Rectangle getItemRect(int i) {
-        int cols = 3;
+        int cols = 2; // <--- UBAH DARI 3 MENJADI 2
         int col = i % cols, row = i / cols;
-        // Jarak X (samping) dijauhkan menjadi 290, Jarak Y (bawah) dijauhkan menjadi 100
         return new Rectangle(30 + col * 290, 160 + row * 100, 265, 80);
     }
 
-    private Rectangle getShopTabRect() { return new Rectangle(30, 100, 120, 36); }
-    private Rectangle getInvTabRect() { return new Rectangle(160, 100, 140, 36); }
-    private Rectangle getBackRect() { return new Rectangle(30, 570, 110, 36); }
+    private Rectangle getShopTabRect() {
+        return new Rectangle(30, 100, 120, 36);
+    }
+
+    private Rectangle getInvTabRect() {
+        return new Rectangle(160, 100, 140, 36);
+    }
+
+    private Rectangle getBackRect() {
+        return new Rectangle(30, 550, 110, 36);
+    }
 
     private void handleActionButtons(int mx, int my) {
         PlayerData pd = GameEngine.getInstance().getCurrentPlayer();
-        if (selectedItem < 0) return;
-
+        if (selectedItem < 0) {
+            return;
+        }
         if (activeTab == Tab.SHOP) {
-            Rectangle buyBtn = new Rectangle(630, 200, 220, 44);
+            Rectangle buyBtn = new Rectangle(630, 350, 220, 44);
             if (buyBtn.contains(mx, my)) {
                 ShopItem item = CATALOG.get(selectedItem);
                 // Check already owned
                 boolean owned = pd.getInventory().stream().anyMatch(i -> i.getId().equals(item.getId()));
-                if (owned) { setStatus("Sudah dimiliki!", true); return; }
-                if (pd.getGold() < item.getPrice()) { setStatus("Koin tidak cukup!", true); return; }
+                if (owned) {
+                    setStatus("Sudah dimiliki!", true);
+                    return;
+                }
+                if (pd.getGold() < item.getPrice()) {
+                    setStatus("Koin tidak cukup!", true);
+                    return;
+                }
                 pd.setGold(pd.getGold() - item.getPrice());
                 // Clone item for inventory
                 ShopItem bought = new ShopItem(item.getId(), item.getName(), item.getDescription(), item.getPrice(), item.getStatBonus(), item.getType());
@@ -119,15 +152,22 @@ public class ShopScreen extends BasePanel {
         } else {
             // Inventory actions
             List<ShopItem> inv = pd.getInventory();
-            if (selectedItem >= inv.size()) return;
+            if (selectedItem >= inv.size()) {
+                return;
+            }
             ShopItem item = inv.get(selectedItem);
 
-            Rectangle equipBtn = new Rectangle(630, 200, 220, 44);
-            Rectangle delBtn = new Rectangle(630, 256, 220, 44);
+            Rectangle equipBtn = new Rectangle(630, 350, 220, 44);
+            Rectangle delBtn = new Rectangle(630, 410, 220, 44);
 
             if (equipBtn.contains(mx, my)) {
-                if (item.isEquipped()) { pd.unequipItem(item); setStatus("Dilepas: " + item.getName(), false); }
-                else { pd.equipItem(item); setStatus("Dipakai: " + item.getName(), false); }
+                if (item.isEquipped()) {
+                    pd.unequipItem(item);
+                    setStatus("Dilepas: " + item.getName(), false);
+                } else {
+                    pd.equipItem(item);
+                    setStatus("Dipakai: " + item.getName(), false);
+                }
                 SaveManager.savePlayer(pd);
             } else if (delBtn.contains(mx, my)) {
                 pd.removeItem(item);
@@ -188,10 +228,10 @@ public class ShopScreen extends BasePanel {
         if (statusTimer > 0) {
             g2.setFont(new Font("Serif", Font.BOLD, 14));
             g2.setColor(COL_GOLD_LIGHT);
-            g2.drawString(statusMsg, 30, h - 50);
+            g2.drawString(statusMsg, 380, 570);
         }
 
-        drawButton(g2, 30, 570, 110, 36, "◄ KEMBALI", false, false);
+        drawButton(g2, 30, 550, 110, 36, "◄ KEMBALI", false, false);
 
         g2.dispose();
     }
@@ -278,10 +318,14 @@ public class ShopScreen extends BasePanel {
 
             boolean canAfford = pd != null && pd.getGold() >= item.getPrice();
             boolean owned = pd != null && pd.getInventory().stream().anyMatch(x -> x.getId().equals(item.getId()));
-            drawButton(g2, 630, 200 + 110, 220, 44, owned ? "✓ SUDAH DIMILIKI" : (canAfford ? "BELI" : "KOIN KURANG"), false, owned);
+
+            // UBAH koordinat Y (dari 200 + 110) menjadi 350 murni
+            drawButton(g2, 630, 350, 220, 44, owned ? "✓ SUDAH DIMILIKI" : (canAfford ? "BELI" : "KOIN KURANG"), false, owned);
         } else {
-            drawButton(g2, 630, 200, 220, 44, item.isEquipped() ? "✗ LEPAS" : "✓ GUNAKAN", false, item.isEquipped());
-            drawButton(g2, 630, 256, 220, 44, "HAPUS", false, false);
+            // UBAH koordinat Y dari 200 menjadi 350
+            drawButton(g2, 630, 350, 220, 44, item.isEquipped() ? "✗ LEPAS" : "✓ GUNAKAN", false, item.isEquipped());
+            // UBAH koordinat Y dari 256 menjadi 410
+            drawButton(g2, 630, 410, 220, 44, "HAPUS", false, false);
         }
     }
 
@@ -297,14 +341,19 @@ public class ShopScreen extends BasePanel {
             }
             line.append(word).append(" ");
         }
-        if (line.length() > 0) g2.drawString(line.toString(), x, cy);
+        if (line.length() > 0) {
+            g2.drawString(line.toString(), x, cy);
+        }
     }
 
     private Color getTypeColor(ShopItem.ItemType type) {
         switch (type) {
-            case WEAPON: return new Color(180, 60, 60);
-            case SKILL: return new Color(60, 80, 180);
-            default: return COL_BORDER;
+            case WEAPON:
+                return new Color(180, 60, 60);
+            case SKILL:
+                return new Color(60, 80, 180);
+            default:
+                return COL_BORDER;
         }
     }
 }

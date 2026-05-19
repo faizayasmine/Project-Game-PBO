@@ -40,8 +40,17 @@ public class MiniBoss extends Entity {
     }
 
     public boolean canAttack(float px, float py) {
-        float dist = (float) Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2));
-        return dist < 65 && attackCooldown == 0;
+        // 1. Hitung jarak HORIZONTAL (Kanan-Kiri) saja
+        float distX = Math.abs(this.x - px);
+
+        // 2. Hitung selisih TINGGI VERTIKAL (Atas-Bawah)
+        float distY = Math.abs(this.y - py);
+
+        // 3. Mini boss HANYA BISA MENYERANG jika:
+        //    - Jarak horizontal dekat (di bawah 45 piksel)
+        //    - Dan posisi tinggi badan mereka sejajar di tanah (selisih Y di bawah 20 piksel)
+        //    - Cooldown serangan sudah siap (0)
+        return distX < 45 && distY < 20 && attackCooldown == 0;
     }
 
     public int doAttack() {
@@ -88,26 +97,24 @@ public class MiniBoss extends Entity {
 
         // HP
         p.setColor(new Color(40, 10, 10));
-        p.fillRect(cx - 28, cy + 28, 56, 7);
+        p.fillRect(cx - 28, cy - 45, 56, 7); // Ubah cy + 28 menjadi cy - 45
 
         p.setColor(new Color(200, 40, 40));
         p.fillRect(
                 cx - 28,
-                cy + 28,
+                cy - 45, // Ubah cy + 28 menjadi cy - 45
                 (int) (56 * getHpRatio()),
                 7
         );
 
         p.setColor(new Color(80, 20, 20));
         p.setStroke(new BasicStroke(1f));
-        p.drawRect(cx - 28, cy + 28, 56, 7);
+        p.drawRect(cx - 28, cy - 45, 56, 7); // Ubah cy + 28 menjadi cy - 45
 
         // Label
         p.setFont(new Font("Serif", Font.BOLD, 9));
-
         p.setColor(COL_RED);
-
-        p.drawString("MINI BOSS", cx - 22, cy + 26);
+        p.drawString("MINI BOSS", cx - 22, cy - 50); // Ubah cy + 26 menjadi cy - 50
 
         p.dispose();
     }

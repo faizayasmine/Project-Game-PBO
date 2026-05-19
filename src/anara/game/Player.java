@@ -13,14 +13,14 @@ public class Player extends Entity {
     public boolean isAttacking = false;
     public int attackFrame = 0;
     private float animPhase = 0f;
-   private boolean mainPlayer = false;
-private boolean jumping = false;
+    private boolean mainPlayer = false;
+    private boolean jumping = false;
     private boolean canJump = true;
     private boolean onGround = true;
 
     private float velocityY = 0;
 
-    private final float gravity = 0.8f;
+    private final float gravity = 0.4f;
     private final float jumpPower = -12f;
 
     private final int groundY = 420;
@@ -32,41 +32,74 @@ private boolean jumping = false;
     public void setExternalBonuses(int atk) {
         attackBonusExternal = atk;
     }
+
     public void setMainPlayer(boolean mainPlayer) {
-    this.mainPlayer = mainPlayer;
-}
-
-   public void jump() {
-
-    if (!mainPlayer) {
-        return;
+        this.mainPlayer = mainPlayer;
     }
 
-    if (onGround) {
-        jumping = true;
-        onGround = false;
-        velocityY = jumpPower;
-    }
-}
-   public void updateJump() {
+    public void jump() {
+        if (!mainPlayer) {
+            return;
+        }
 
-    if (!mainPlayer) {
-        return;
-    }
-
-    if (jumping) {
-
-        y += velocityY;
-        velocityY += gravity;
-
-        if (y >= groundY) {
-            y = groundY;
-            jumping = false;
-            onGround = true;
-            velocityY = 0;
+        if (onGround) {
+            jumping = true;
+            onGround = false;
+            velocityY = jumpPower;
         }
     }
-}
+
+    // =================================================================
+    // LOGIKA JUMP & COLLISION PLATFORM (Hanya ada satu & Tanpa @Override)
+    // =================================================================
+    public void updateJump() {
+        if (!mainPlayer) {
+            return;
+        }
+
+        if (jumping) {
+            float oldY = y; // Simpan posisi Y sebelum ditambah kecepatan jatuh
+
+            y += velocityY;
+            velocityY += gravity;
+
+            // Koordinat platform garis kuning (Sesuaikan angka ini jika letak garis bergeser)
+            float platXStart = 40;   
+            float platXEnd = 320;    
+            float platY = 270;       
+
+            // Deteksi mendarat di garis kuning jika sedang bergerak jatuh ke bawah
+            if (velocityY > 0) {
+                if (x >= platXStart && x <= platXEnd) {
+                    if (oldY <= platY && y >= platY) {
+                        y = platY;          
+                        jumping = false;    
+                        onGround = true;    
+                        velocityY = 0;      
+                        return;             
+                    }
+                }
+            }
+
+            // Logika asli untuk Lantai Dasar (Paling Bawah)
+            if (y >= groundY) {
+                y = groundY;
+                jumping = false;
+                onGround = true;
+                velocityY = 0;
+            }
+        } 
+        // Logika jika player berjalan keluar dari batas ujung garis kuning agar bisa jatuh
+        else if (onGround && y == 270) { // Angka 270 disamakan dengan platY di atas
+            float platXStart = 40;   
+            float platXEnd = 320;    
+            if (x < platXStart || x > platXEnd) {
+                jumping = true;     
+                onGround = false;
+                velocityY = 0;      
+            }
+        }
+    }
 
     public void setX(float x) {
         this.x = x;
@@ -84,39 +117,42 @@ private boolean jumping = false;
         return y;
     }
 
+    // =================================================================
+    // METHOD UPDATE UTAMA (Mengembalikan Logika Asli Game yang Sempat Hilang)
+    // =================================================================
     @Override
-public void update(float targetX, float targetY, int mapW, int mapH) {
-updateJump();
-    animPhase += 0.08f;
+    public void update(float targetX, float targetY, int mapW, int mapH) {
+        updateJump();
+        animPhase += 0.08f;
 
-    x = Math.max(30, Math.min(mapW - 30, x));
-    y = Math.max(30, Math.min(mapH - 30, y));
+        x = Math.max(30, Math.min(mapW - 30, x));
+        y = Math.max(30, Math.min(mapH - 30, y));
 
-    if (attackCooldown > 0) {
-        attackCooldown--;
-    }
+        if (attackCooldown > 0) {
+            attackCooldown--;
+        }
 
-    if (skillCooldown > 0) {
-        skillCooldown--;
-    }
+        if (skillCooldown > 0) {
+            skillCooldown--;
+        }
 
-    if (invincibleFrames > 0) {
-        invincibleFrames--;
-    }
+        if (invincibleFrames > 0) {
+            invincibleFrames--;
+        }
 
-    if (isAttacking) {
-        attackFrame++;
+        if (isAttacking) {
+            attackFrame++;
 
-        if (attackFrame > 12) {
-            isAttacking = false;
-            attackFrame = 0;
+            if (attackFrame > 12) {
+                isAttacking = false;
+                attackFrame = 0;
+            }
+        }
+
+        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+            angle = (float) Math.atan2(dy, dx);
         }
     }
-
-    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-        angle = (float) Math.atan2(dy, dx);
-    }
-}
 
     public void addMovement(float mx, float my) {
         this.x += mx;
@@ -170,7 +206,6 @@ updateJump();
     public float getAnimPhase() {
         return animPhase;
     }
-//
 
     @Override
     public void draw(Graphics2D g2) {
@@ -217,9 +252,7 @@ updateJump();
         p.rotate(angle + Math.PI / 2, cx, cy);
 
         if (isAttacking) {
-
             float swingA = (float) (attackFrame / 12.0 * Math.PI);
-
             p.rotate(swingA - Math.PI / 3, cx, cy);
         }
 

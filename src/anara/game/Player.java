@@ -15,7 +15,7 @@ public class Player extends Entity {
     private float animPhase = 0f;
 
     public Player(float x, float y) {
-        super(x, y, 150, 25, 5, 3);
+        super(x, y, 200, 35, 5, 3);
     }
 
     public void setExternalBonuses(int atk, int def) {
@@ -46,9 +46,8 @@ public class Player extends Entity {
 //        y += dy;
         x = Math.max(30, Math.min(mapW - 30, x));
         y = Math.max(30, Math.min(mapH - 30, y));
-        
 
-     x = Math.max(30, Math.min(mapW - 30, x));
+        x = Math.max(30, Math.min(mapW - 30, x));
         y = Math.max(30, Math.min(mapH - 30, y));
 
         if (attackCooldown > 0) {
@@ -71,12 +70,13 @@ public class Player extends Entity {
         if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
             angle = (float) Math.atan2(dy, dx);
         }
-       
+
     }
+
     public void addMovement(float mx, float my) {
-    this.x += mx;
-    this.y += my;
-}
+        this.x += mx;
+        this.y += my;
+    }
 
     public boolean canAttack() {
         return attackCooldown == 0;
@@ -138,66 +138,66 @@ public class Player extends Entity {
         }
 
         p.setColor(new Color(0, 0, 0, 80));
-    p.fillOval(cx - 18, cy + 18, 36, 12);
+        p.fillOval(cx - 18, cy + 18, 36, 12);
 
-    p.setColor(new Color(80, 55, 30));
-    p.fillOval(cx - 16, cy - 16, 32, 32);
+        p.setColor(new Color(80, 55, 30));
+        p.fillOval(cx - 16, cy - 16, 32, 32);
 
-    p.setColor(new Color(110, 80, 45));
-    p.fillOval(cx - 10, cy - 12, 20, 15);
+        p.setColor(new Color(110, 80, 45));
+        p.fillOval(cx - 10, cy - 12, 20, 15);
 
-    p.setColor(new Color(200, 170, 130));
-    p.fillOval(cx - 9, cy - 26, 18, 18);
+        p.setColor(new Color(200, 170, 130));
+        p.fillOval(cx - 9, cy - 26, 18, 18);
 
-    p.setColor(new Color(70, 50, 20));
+        p.setColor(new Color(70, 50, 20));
 
-    float swing = (float) Math.sin(anim) * 5f;
+        float swing = (float) Math.sin(anim) * 5f;
 
-    int[] px = {
-        cx - 3,
-        cx + 3,
-        cx + 2 + (int) swing,
-        cx - 2 + (int) swing
-    };
+        int[] px = {
+            cx - 3,
+            cx + 3,
+            cx + 2 + (int) swing,
+            cx - 2 + (int) swing
+        };
 
-    int[] py = {
-        cy - 20,
-        cy - 20,
-        cy + 18,
-        cy + 18
-    };
+        int[] py = {
+            cy - 20,
+            cy - 20,
+            cy + 18,
+            cy + 18
+        };
 
-    p.fillPolygon(px, py, 4);
+        p.fillPolygon(px, py, 4);
 
-    p.rotate(angle + Math.PI / 2, cx, cy);
+        p.rotate(angle + Math.PI / 2, cx, cy);
 
-    if (isAttacking) {
+        if (isAttacking) {
 
-        float swingA = (float) (attackFrame / 12.0 * Math.PI);
+            float swingA = (float) (attackFrame / 12.0 * Math.PI);
 
-        p.rotate(swingA - Math.PI / 3, cx, cy);
-    }
+            p.rotate(swingA - Math.PI / 3, cx, cy);
+        }
 
-    p.setColor(new Color(170, 170, 190));
+        p.setColor(new Color(170, 170, 190));
 
-    p.setStroke(new BasicStroke(
-            3f,
-            BasicStroke.CAP_ROUND,
-            BasicStroke.JOIN_ROUND
-    ));
+        p.setStroke(new BasicStroke(
+                3f,
+                BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND
+        ));
 
-    p.drawLine(cx, cy - 14, cx, cy + 32);
+        p.drawLine(cx, cy - 14, cx, cy + 32);
 
-    p.setColor(new Color(180, 150, 60));
+        p.setColor(new Color(180, 150, 60));
 
-    p.setStroke(new BasicStroke(
-            6f,
-            BasicStroke.CAP_ROUND,
-            BasicStroke.JOIN_ROUND
-    ));
+        p.setStroke(new BasicStroke(
+                6f,
+                BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND
+        ));
 
-    p.drawLine(cx - 7, cy + 28, cx + 7, cy + 38);
+        p.drawLine(cx - 7, cy + 28, cx + 7, cy + 38);
 
-    p.dispose();
+        p.dispose();
     }
 }

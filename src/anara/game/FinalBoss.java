@@ -13,7 +13,7 @@ public class FinalBoss extends Entity {
     private int specialCooldown = 180;
 
     public FinalBoss(float x, float y) {
-        super(x, y, 600, 35, 8, 1);
+        super(x, y, 1000, 45, 8, 1);
     }
 
     @Override

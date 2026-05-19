@@ -102,7 +102,12 @@ public class BattleScreen extends BasePanel {
         // MAP_H itu 580. Kalau dibagi 2 = 290 (tengah). 
         // Kita tambah 130f agar posisinya turun menjadi 420 lebih rendah ke tanah
         player = new Player(MAP_W / 2f, (MAP_H / 2f) + 130f);
-        player.setExternalBonuses(pd.getTotalAttackBonus(), pd.getTotalDefenseBonus());
+
+        player.setMainPlayer(true);
+
+        player.setExternalBonuses(
+                pd.getTotalAttackBonus()
+        );
 
         initMap();
         gameLoop = new javax.swing.Timer(16, e -> tick());
@@ -232,11 +237,16 @@ public class BattleScreen extends BasePanel {
         }
 
         if (mapId == 3) {
-            player.update(mousePos.x, mousePos.y, WORLD_W, MAP_H);
-        } else {
-            player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
-            repaint();
 
+            player.update(mousePos.x, mousePos.y, WORLD_W, MAP_H);
+            player.updateJump();
+
+        } else {
+
+            player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
+            player.updateJump();
+
+            repaint();
         }
         // MAP 3 : spawn musuh saat berjalan
         if (mapId == 3) {
@@ -873,7 +883,8 @@ public class BattleScreen extends BasePanel {
                 e.setX(pX + sign * attackRange);
             }
             // Amankan posisi Y agar selalu sejajar di tinggi tanah target
-            e.setY(pY);
+            float groundY = (MAP_H / 2f) + 130f;
+            e.setY(groundY);
         }
 
         // ===== TAHAP 2: SEPARATION (BERJEJER HORIZONTAL) =====
@@ -913,21 +924,29 @@ public class BattleScreen extends BasePanel {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
+
                     case KeyEvent.VK_A:
                     case KeyEvent.VK_LEFT:
                         keyLeft = true;
                         break;
+
                     case KeyEvent.VK_D:
                     case KeyEvent.VK_RIGHT:
                         keyRight = true;
                         break;
+
+                    // JUMP
+                    case KeyEvent.VK_W:
+                        player.jump();
+                        break;
+
                     case KeyEvent.VK_ESCAPE:
                         if (gameLoop != null) {
                             gameLoop.stop();
                         }
+
                         GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAIN_MENU);
                         break;
-
                 }
             }
 

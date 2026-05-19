@@ -94,7 +94,6 @@ public class PlayerDataScreen extends BasePanel {
         drawStatRow(g2, 55, 415, "Senjata equip", String.valueOf(
             pd.getEquippedItems().stream().filter(i -> i.getType() == ShopItem.ItemType.WEAPON).count()), COL_RED_LIGHT);
         drawStatRow(g2, 55, 440, "ATK Bonus", "+" + pd.getTotalAttackBonus(), new Color(220, 120, 80));
-        drawStatRow(g2, 55, 460, "DEF Bonus", "+" + pd.getTotalDefenseBonus(), new Color(80, 160, 200));
         drawStatRow(g2, 55, 480, "SKL Bonus", "+" + pd.getTotalSkillBonus(), new Color(100, 200, 120));
 
         // Right - inventory list

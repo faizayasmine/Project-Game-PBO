@@ -54,12 +54,7 @@ public class PlayerData implements Serializable {
             .filter(i -> i.getType() == ShopItem.ItemType.WEAPON)
             .mapToInt(ShopItem::getStatBonus).sum();
     }
-
-    public int getTotalDefenseBonus() {
-        return equippedItems.stream()
-            .filter(i -> i.getType() == ShopItem.ItemType.DEFENSE)
-            .mapToInt(ShopItem::getStatBonus).sum();
-    }
+  
 
     public int getTotalSkillBonus() {
         return equippedItems.stream()

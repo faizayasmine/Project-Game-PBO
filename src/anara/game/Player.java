@@ -13,15 +13,60 @@ public class Player extends Entity {
     public boolean isAttacking = false;
     public int attackFrame = 0;
     private float animPhase = 0f;
+   private boolean mainPlayer = false;
+private boolean jumping = false;
+    private boolean canJump = true;
+    private boolean onGround = true;
+
+    private float velocityY = 0;
+
+    private final float gravity = 0.8f;
+    private final float jumpPower = -12f;
+
+    private final int groundY = 420;
 
     public Player(float x, float y) {
         super(x, y, 200, 35, 5, 3);
     }
 
-    public void setExternalBonuses(int atk, int def) {
+    public void setExternalBonuses(int atk) {
         attackBonusExternal = atk;
-        defenseBonusExternal = def;
     }
+    public void setMainPlayer(boolean mainPlayer) {
+    this.mainPlayer = mainPlayer;
+}
+
+   public void jump() {
+
+    if (!mainPlayer) {
+        return;
+    }
+
+    if (onGround) {
+        jumping = true;
+        onGround = false;
+        velocityY = jumpPower;
+    }
+}
+   public void updateJump() {
+
+    if (!mainPlayer) {
+        return;
+    }
+
+    if (jumping) {
+
+        y += velocityY;
+        velocityY += gravity;
+
+        if (y >= groundY) {
+            y = groundY;
+            jumping = false;
+            onGround = true;
+            velocityY = 0;
+        }
+    }
+}
 
     public void setX(float x) {
         this.x = x;
@@ -40,38 +85,38 @@ public class Player extends Entity {
     }
 
     @Override
-    public void update(float targetX, float targetY, int mapW, int mapH) {
-        animPhase += 0.08f;
-//        x += dx;
-//        y += dy;
-        x = Math.max(30, Math.min(mapW - 30, x));
-        y = Math.max(30, Math.min(mapH - 30, y));
+public void update(float targetX, float targetY, int mapW, int mapH) {
+updateJump();
+    animPhase += 0.08f;
 
-        x = Math.max(30, Math.min(mapW - 30, x));
-        y = Math.max(30, Math.min(mapH - 30, y));
+    x = Math.max(30, Math.min(mapW - 30, x));
+    y = Math.max(30, Math.min(mapH - 30, y));
 
-        if (attackCooldown > 0) {
-            attackCooldown--;
-        }
-        if (skillCooldown > 0) {
-            skillCooldown--;
-        }
-        if (invincibleFrames > 0) {
-            invincibleFrames--;
-        }
-        if (isAttacking) {
-            attackFrame++;
-            if (attackFrame > 12) {
-                isAttacking = false;
-                attackFrame = 0;
-            }
-        }
-
-        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-            angle = (float) Math.atan2(dy, dx);
-        }
-
+    if (attackCooldown > 0) {
+        attackCooldown--;
     }
+
+    if (skillCooldown > 0) {
+        skillCooldown--;
+    }
+
+    if (invincibleFrames > 0) {
+        invincibleFrames--;
+    }
+
+    if (isAttacking) {
+        attackFrame++;
+
+        if (attackFrame > 12) {
+            isAttacking = false;
+            attackFrame = 0;
+        }
+    }
+
+    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+        angle = (float) Math.atan2(dy, dx);
+    }
+}
 
     public void addMovement(float mx, float my) {
         this.x += mx;

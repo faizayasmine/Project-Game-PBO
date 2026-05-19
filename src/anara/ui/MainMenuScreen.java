@@ -142,7 +142,6 @@ public class MainMenuScreen extends BasePanel {
             g2.setFont(new Font("SansSerif", Font.BOLD, 10));
             g2.setColor(COL_TEXT_DIM);
             g2.drawString("ATK +" + p.getTotalAttackBonus(), x + 15, statY);
-            g2.drawString("DEF +" + p.getTotalDefenseBonus(), x + 15, statY + 16);
             g2.drawString("SKL +" + p.getTotalSkillBonus(), x + 90, statY);
         }
     }

@@ -1,70 +1,42 @@
 package anara.game;
 
 import static anara.game.Entity.RNG;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 public class Soldier extends Entity {
 
     private int attackCooldown = RNG.nextInt(60);
     private Color bodyColor;
+    private int animTick = 0;          // ← untuk animasi jalan
+    private boolean facingLeft = false; // ← untuk balik arah
 
     public Soldier(float x, float y, int tier) {
         super(x, y, 40 + tier * 10, 8 + tier * 2, 1, 2);
         bodyColor = tier == 1 ? new Color(60, 80, 60) : new Color(80, 50, 50);
     }
 
-    // PARAMETER DIKEMBALIKAN KE 4 AGAR @Override TIDAK ERROR
     @Override
     public void update(float playerX, float playerY, int mapW, int mapH) {
         float soldierSpeed = 1.8f;
 
-        // 1. Pergerakan mengejar Player (Bisa menumpuk langsung di Player)
+        // Tentukan arah hadap
+        facingLeft = (this.x > playerX);
+
         if (this.x > playerX + 15) {
             this.x -= soldierSpeed;
         } else if (this.x < playerX - 15) {
             this.x += soldierSpeed;
         }
 
-        // Cooldown serangan
-        if (attackCooldown > 0) {
-            attackCooldown--;
-        }
-    }
-
-    // METHOD BARU KHUSUS UNTUK MEMISAHKAN SESAMA SOLDIER
-    public void handleSoldierCollision(java.util.List<Soldier> allSoldiers) {
-        float minDistance = 24f; // Jarak minimal antar soldier agar tidak tumpang tindih
-
-        for (Soldier other : allSoldiers) {
-            if (other == this) {
-                continue; // Jangan cek dengan diri sendiri
-            }
-            // Hitung jarak X antara soldier ini dengan soldier lain
-            float dx = this.x - other.x;
-
-            // Jika jaraknya terlalu dekat (saling bertumpuk)
-            if (Math.abs(dx) < minDistance) {
-                // Berikan dorongan menjauh secara halus
-                if (dx == 0) {
-                    // Jika posisi X sama persis, beri dorongan acak sedikit ke kanan atau kiri
-                    this.x += RNG.nextBoolean() ? 0.5f : -0.5f;
-                } else if (dx > 0) {
-                    this.x += 0.6f; // Geser ke kanan jika berada di kanan soldier lain
-                } else {
-                    this.x -= 0.6f; // Geser ke kiri jika berada di kiri soldier lain
-                }
-            }
-        }
+        if (attackCooldown > 0) attackCooldown--;
+        animTick++; // ← update animasi
     }
 
     public boolean canAttack(float px, float py) {
-        float distX = Math.abs(this.x - px);
-        float distY = Math.abs(this.y - py);
-
-        // Jarak serang horizontal dekat (45) DAN tinggi sejajar (di bawah 30)
-        return distX < 45 && distY < 30 && attackCooldown == 0;
+        float dist = (float) Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2));
+        return dist < 110 && attackCooldown == 0;
     }
 
     public int doAttack() {
@@ -78,30 +50,56 @@ public class Soldier extends Entity {
         p.setRenderingHint(
                 java.awt.RenderingHints.KEY_ANTIALIASING,
                 java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-
         int cx = (int) x, cy = (int) y;
 
+        // Bayangan
         p.setColor(new Color(0, 0, 0, 60));
         p.fillOval(cx - 14, cy + 12, 28, 10);
 
-        p.setColor(bodyColor);
-        p.fillRoundRect(cx - 11, cy - 13, 22, 26, 8, 8);
+        // Pilih sprite sesuai kondisi
+        BufferedImage sprite;
+        if (!isAlive()) {
+            sprite = anara.utils.AssetManager.soldierMati;
+        } else if (attackCooldown < 30 && attackCooldown > 0) {
+            sprite = (attackCooldown % 2 == 0)
+                    ? anara.utils.AssetManager.soldierAttack1
+                    : anara.utils.AssetManager.soldierAttack2;
+        } else {
+            sprite = (animTick / 15 % 2 == 0)
+                    ? anara.utils.AssetManager.soldierJalan1
+                    : anara.utils.AssetManager.soldierJalan2;
+        }
 
-        p.setColor(new Color(100, 90, 80));
-        p.fillOval(cx - 7, cy - 20, 14, 14);
+        // Gambar sprite dengan flip arah
+        if (sprite != null) {
+            int spriteW = 72;
+            int spriteH = 72;
+            int drawX = cx - spriteW / 2;
+            int drawY = cy - spriteH + 20;
 
-        // Spear
-        p.setColor(new Color(120, 100, 60));
-        p.setStroke(new BasicStroke(1.5f));
-        p.drawLine(cx + 4, cy - 18, cx + 12, cy + 10);
+            Graphics2D sg = (Graphics2D) p.create();
 
-        p.setColor(new Color(160, 160, 180));
-        p.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        p.drawLine(cx + 3, cy - 18, cx + 10, cy - 12);
+            if (facingLeft && isAlive()) {
+                // Flip hanya saat hidup
+                sg.translate(drawX + spriteW, drawY);
+                sg.scale(-1, 1);
+                sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
+            } else {
+                // Mati atau menghadap kanan → gambar normal
+                sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
+            }
+
+            sg.dispose();
+        } else {
+            // Fallback
+            p.setColor(bodyColor);
+            p.fillRoundRect(cx - 11, cy - 13, 22, 26, 8, 8);
+        }
 
         // HP bar
-        drawEntityHP(p, cx, cy, 18, getHpRatio());
 
+        // HP bar
+        drawEntityHP(p, cx, cy - 20, 36, getHpRatio());
         p.dispose();
     }
 

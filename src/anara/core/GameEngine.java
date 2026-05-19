@@ -3,7 +3,7 @@ package anara.core;
 import anara.ui.*;
 import anara.model.PlayerData;
 import anara.audio.SoundManager;
-
+import anara.utils.AssetManager;
 import javax.swing.*;
 import java.awt.*;
 
@@ -35,7 +35,7 @@ public class GameEngine {
     }
 
     public void start() {
-        mainFrame = new JFrame("ANARA");
+        mainFrame = new JFrame("SURVIVAL SYLVAN");
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setSize(900, 650);
         mainFrame.setLocationRelativeTo(null);
@@ -45,6 +45,8 @@ public class GameEngine {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         mainPanel.setBackground(Color.BLACK);
+        
+         AssetManager.loadAssets();
 
         // Register all screens
         mainPanel.add(new LoginScreen(), SCREEN_LOGIN);

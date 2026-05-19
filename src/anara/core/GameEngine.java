@@ -37,7 +37,7 @@ public class GameEngine {
     public void start() {
         mainFrame = new JFrame("SURVIVAL SYLVAN");
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        mainFrame.setSize(900, 580);
+        mainFrame.setSize(900, 650);
         mainFrame.setLocationRelativeTo(null);
         mainFrame.setResizable(false);
         mainFrame.setCursor(createCustomCursor());

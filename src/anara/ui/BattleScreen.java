@@ -217,10 +217,10 @@ public class BattleScreen extends BasePanel {
         }
 
         if (moveX != 0) {
-            player.addMovement(moveX, 0); // Gerak vertikal dikunci di angka 0
+            player.addMovement(moveX, 0);
         }
 
-        // MAP 1
+        // MAP 1 Spawning
         if (mapId == 1 && remainingSoldiersToSpawn > 0) {
             soldierSpawnTimer--;
             if (soldierSpawnTimer <= 0) {
@@ -236,38 +236,29 @@ public class BattleScreen extends BasePanel {
             showNotif("PERINGATAN: MINI BOSS TELAH MUNCUL!", 180);
         }
 
+        // UPDATE PLAYER & KAMERA ( FIX KOORDINAT MOUSE MAP 3 )
         if (mapId == 3) {
+            // Ditambah cameraX agar arah hadap player sinkron dengan posisi world
+            player.update(mousePos.x + cameraX, mousePos.y, WORLD_W, MAP_H);
 
-            player.update(mousePos.x, mousePos.y, WORLD_W, MAP_H);
-            player.updateJump();
-
-        } else {
-
-            player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
-            player.updateJump();
-
-            repaint();
-        }
-        // MAP 3 : spawn musuh saat berjalan
-        if (mapId == 3) {
             spawnCooldown--;
-            // Kamera mengikuti player
             cameraX = (int) (player.getX() - MAP_W / 2);
+            cameraX = Math.max(0, Math.min(cameraX, WORLD_W - MAP_W));
 
-            // batas kamera
-            cameraX = Math.max(
-                    0,
-                    Math.min(cameraX, WORLD_W - MAP_W)
-            );
             if (spawnCooldown <= 0) {
                 float x = player.getX() + 300;
                 if (x < WORLD_W - 150) {
                     soldiers.add(new Soldier((int) x, (int) ((MAP_H / 2) + 130), 2));
                 }
-                spawnCooldown = 120; // tiap ±2 detik
+                spawnCooldown = 120;
             }
+        } else {
+            player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
         }
-        // ===== MAP 4 PHASE SYSTEM =====
+
+        player.updateJump();
+
+        // MAP 4 PHASE SYSTEM
         if (mapId == 4) {
             if (!finalBossAppeared && soldiers.stream().noneMatch(s -> s.isAlive())) {
                 finalBoss = new FinalBoss(MAP_W / 2f, 120);
@@ -277,28 +268,21 @@ public class BattleScreen extends BasePanel {
             if (finalBoss != null && finalBoss.isAlive()) {
                 bossSpawnCooldown--;
                 if (bossSpawnCooldown <= 0) {
-                    // Perbaikan spawnY dikunci langsung di atas tanah kaku
                     int spawnAtGroundY = (int) ((MAP_H / 2) + 130);
-                    soldiers.add(
-                            new Soldier(
-                                    (int) (finalBoss.getX() + new Random().nextInt(200) - 100),
-                                    spawnAtGroundY, // Mengunci agar tidak spawn di luar langit
-                                    2
-                            )
-                    );
+                    soldiers.add(new Soldier(
+                            (int) (finalBoss.getX() + new Random().nextInt(200) - 100),
+                            spawnAtGroundY,
+                            2
+                    ));
                     showNotif("FINAL BOSS MEMANGGIL PASUKAN!", 90);
                     bossSpawnCooldown = 300;
                 }
             }
         }
 
-        // Tentukan tinggi tanah kaku untuk mengunci posisi vertikal musuh
-        int targetGroundY = (int) ((MAP_H / 2) + 130);
-
-        // Update para Soldier
+        // Update para Soldier & Hit Player
         for (Soldier s : soldiers) {
             if (s.isAlive()) {
-                // PANGGIL UPDATE AGAR AI BERJALAN MENGEJAR PLAYER
                 s.update(player.getX(), player.getY(), MAP_W, MAP_H);
 
                 if (s.canAttack(player.getX(), player.getY())) {
@@ -307,59 +291,39 @@ public class BattleScreen extends BasePanel {
 
                     float randomX = player.getX() + (float) (Math.random() * 60 - 30);
                     float fixedY = player.getY() - 30;
-
                     spawnDamageText(randomX, fixedY, dmg, Color.RED);
                 }
             }
         }
 
-// Update para Mini Boss
+        // Update para Mini Boss & Hit Player
         for (MiniBoss mb : miniBosses) {
             if (mb.isAlive()) {
-                // PANGGIL UPDATE AGAR AI MINI BOSS BERJALAN MENGEJAR PLAYER
                 mb.update(player.getX(), player.getY(), MAP_W, MAP_H);
 
-                if (mb.canAttack(player.getX(), player.getY())) {
+                // 1. HITUNG SELISIH VERTIKAL (Y) ANTARA MINI BOSS DAN PLAYER SECARA LANGSUNG
+                float selisihY = Math.abs(mb.getY() - player.getY());
+
+                // 2. TAMBAHKAN SYARAT: selisihY harus kurang dari 40 piksel (artinya harus sejajar di tanah)
+                if (mb.canAttack(player.getX(), player.getY()) && selisihY < 40) {
                     int dmg = mb.doAttack();
                     player.hit(dmg);
 
                     float randomX = player.getX() + (float) (Math.random() * 50 - 25);
                     float randomY = (player.getY() - 30) + (float) (Math.random() * 20 - 10);
-
                     spawnDamageText(randomX, randomY, dmg, new Color(220, 100, 0));
                 }
             }
         }
 
+        // Update Final Boss & Hit Player
         if (finalBoss != null && finalBoss.isAlive()) {
             finalBoss.update(player.getX(), player.getY(), MAP_W, MAP_H);
-        }
 
-        // ===== PANGGIL DI SINI =====
-        // Ini akan membenahi posisi semua musuh sebelum kalkulasi serangan dimulai
-        applyEnemySteeringAndSeparation();
-
-        // Enemy attacks player
-        for (Soldier s : soldiers) {
-            if (s.isAlive() && s.canAttack(player.getX(), player.getY())) {
-                int dmg = s.doAttack();
-                player.hit(dmg);
-                spawnDamageText(player.getX(), player.getY() - 30, dmg, Color.RED);
-            }
-        }
-        for (MiniBoss mb : miniBosses) {
-            if (mb.isAlive() && mb.canAttack(player.getX(), player.getY())) {
-                int dmg = mb.doAttack();
-                player.hit(dmg);
-                spawnDamageText(player.getX(), player.getY() - 30, dmg, new Color(220, 100, 0));
-            }
-        }
-        if (finalBoss != null && finalBoss.isAlive()) {
             if (finalBoss.canAttack(player.getX(), player.getY())) {
                 player.hit(finalBoss.doAttack());
             }
             if (finalBoss.canSpecial()) {
-                // AoE - hit if within 120px
                 float dist = dist(player.getX(), player.getY(), finalBoss.getX(), finalBoss.getY());
                 if (dist < 120) {
                     player.hit(finalBoss.doSpecial());
@@ -369,19 +333,30 @@ public class BattleScreen extends BasePanel {
             }
         }
 
-        // Map 2: spawn more soldiers
+        // Pisahkan posisi antar musuh agar tidak menumpuk
+        applyEnemySteeringAndSeparation();
+
+        // [DI SINI SEBELUMNYA ADA LOOP DUPLIKAT YANG SUDAH DIHAPUS]
+        // Map 2: Kondisi Survival
         if (mapId == 2) {
-            // Prajurit hanya bertambah dan spawn jika waktu survival belum habis
             if (survivalTicks < SURVIVAL_TARGET) {
                 survivalTicks++;
                 spawnCooldown--;
                 if (spawnCooldown <= 0) {
-                    spawnSoldiers(2, survivalTicks > 500 ? 2 : 1);
+                    // Hitung berapa jumlah prajurit yang saat ini masih hidup di map
+                    long jumlahSoldierHidup = soldiers.stream().filter(Soldier::isAlive).count();
+                    int maksimalSoldier = 8; // <-- SIlakan ganti angka ini sesuai selera tingkat kesulitanmu
+
+                    // Hanya spawn jika jumlah musuh di layar masih di bawah batas maksimal
+                    if (jumlahSoldierHidup < maksimalSoldier) {
+                        spawnSoldiers(2, survivalTicks > 500 ? 2 : 1);
+                    }
+
+                    // Cooldown tetap direset agar tidak terjadi sisa lag timer
                     spawnCooldown = 120 - Math.min(90, survivalTicks / 20);
                 }
-            } // JIKA WAKTU HABIS dan Mini Boss belum sempat dimunculkan
-            else if (miniBosses.isEmpty()) {
-                spawnMiniBosses(1); // Munculkan 1 Mini Boss setelah 15 detik selesai
+            } else if (miniBosses.isEmpty()) {
+                spawnMiniBosses(1);
             }
         }
 
@@ -391,14 +366,11 @@ public class BattleScreen extends BasePanel {
             d.update();
         }
 
-        // Notif timer
         if (notifTimer > 0) {
             notifTimer--;
         }
 
-        // Win/Lose check
         checkWinLose();
-
         repaint();
     }
 
@@ -518,15 +490,15 @@ public class BattleScreen extends BasePanel {
         // AoE untuk Mini Boss
         miniBosses.stream().filter(m -> m.isAlive() && dist(px, py, m.getX(), m.getY()) < range)
                 .forEach(m -> {
-                    m.takeDamage(dmg); // <-- Hapus / 2 di sini
-                    spawnDamageText(m.getX(), m.getY() - 20, dmg, COL_GOLD_LIGHT); // <-- Hapus / 2 di sini juga
+                    m.takeDamage(dmg);
+                    spawnDamageText(m.getX(), m.getY() - 20, dmg, COL_GOLD_LIGHT);
                 });
 
-        // AoE untuk Final Boss
+        // AoE untuk Final Boss ( FIX SINKRONISASI DAMAGE )
         if (finalBoss != null && finalBoss.isAlive() && dist(px, py, finalBoss.getX(), finalBoss.getY()) < range) {
-            // Catatan: Kalau kamu mau Final Boss juga menerima damage penuh, hapus "/ 3" di bawah ini
             finalBoss.takeDamage(dmg);
-            spawnDamageText(finalBoss.getX(), finalBoss.getY() - 40, dmg / 3, COL_GOLD_LIGHT);
+            // Diganti jadi 'dmg' biasa tanpa bagi 3 agar teks sesuai dengan darah boss yang berkurang
+            spawnDamageText(finalBoss.getX(), finalBoss.getY() - 40, dmg, COL_GOLD_LIGHT);
         }
     }
 
@@ -647,92 +619,110 @@ public class BattleScreen extends BasePanel {
     }
 
     private void drawHUD(Graphics2D g2) {
-        int hudY = MAP_H + 2;
-        int hudH = getHeight() - MAP_H - 2;
-        if (hudH < 1) {
-            hudH = 65;
-        }
+        // Kunci tinggi area HUD hitam
+        int fixedHudH = 90;
+        int startY = getHeight() - fixedHudH;
 
+        // --- PIJAKAN / GROUND BAWAH ---
+        int groundHeight = 80;
+        int groundY = startY - groundHeight;
+
+        g2.setColor(new Color(45, 40, 35));
+        g2.fillRect(0, groundY, MAP_W, groundHeight);
+
+        g2.setColor(new Color(75, 65, 55));
+        g2.setStroke(new BasicStroke(2f));
+        g2.drawLine(0, groundY, MAP_W, groundY);
+
+        // --- BACKGROUND HUD HITAM ---
         g2.setColor(new Color(8, 6, 14));
-        g2.fillRect(0, MAP_H, MAP_W, hudH + 10);
+        g2.fillRect(0, startY, MAP_W, fixedHudH);
+
         g2.setColor(COL_BORDER);
         g2.setStroke(new BasicStroke(1f));
-        g2.drawLine(0, MAP_H, MAP_W, MAP_H);
+        g2.drawLine(0, startY, MAP_W, startY);
 
         if (player == null) {
             return;
         }
 
-        // Player HP
+        // --- PLAYER HP ---
         g2.setFont(new Font("Serif", Font.BOLD, 11));
         g2.setColor(COL_TEXT_DIM);
-        g2.drawString("HP", 15, MAP_H + 18);
-        drawHPBar(g2, 40, MAP_H + 6, 200, 14, player.getHpRatio(), player.hp + "/" + player.maxHp);
+        g2.drawString("HP", 15, startY + 20);
+        drawHPBar(g2, 40, startY + 8, 200, 12, player.getHpRatio(), player.hp + "/" + player.maxHp);
 
-        // Attack cooldown
+        // --- ATTACK COOLDOWN ---
         g2.setColor(COL_TEXT_DIM);
-        g2.drawString("ATK", 15, MAP_H + 36);
+        g2.drawString("ATK", 15, startY + 40);
         int cdA = player.getAttackCooldownPct();
         g2.setColor(new Color(20, 16, 8));
-        g2.fillRect(40, MAP_H + 24, 80, 8);
+        g2.fillRect(40, startY + 30, 80, 8);
         g2.setColor(COL_GOLD);
-        g2.fillRect(40, MAP_H + 24, (int) (80 * cdA / 100f), 8);
+        g2.fillRect(40, startY + 30, (int) (80 * cdA / 100f), 8);
         g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
         g2.setColor(COL_TEXT_DIM);
-        g2.drawString("[KLIK KIRI]", 125, MAP_H + 32);
+        g2.drawString("[KLIK KIRI]", 125, startY + 37);
 
-        // Skill cooldown
+        // --- SKILL COOLDOWN ---
         g2.setFont(new Font("Serif", Font.BOLD, 11));
         g2.setColor(COL_TEXT_DIM);
-        g2.drawString("SKL", 15, MAP_H + 52);
+        g2.drawString("SKL", 15, startY + 58);
         int cdS = player.getSkillCooldownPct();
         g2.setColor(new Color(10, 10, 25));
-        g2.fillRect(40, MAP_H + 40, 80, 8);
+        g2.fillRect(40, startY + 48, 80, 8);
         g2.setColor(new Color(80, 120, 200));
-        g2.fillRect(40, MAP_H + 40, (int) (80 * cdS / 100f), 8);
+        g2.fillRect(40, startY + 48, (int) (80 * cdS / 100f), 8);
         g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
         g2.setColor(COL_TEXT_DIM);
-        g2.drawString("[KLIK KANAN]", 125, MAP_H + 48);
+        g2.drawString("[KLIK KANAN]", 125, startY + 55);
 
-        // Enemy count
+        // --- ENEMY COUNT ---
         long alive = soldiers.stream().filter(Soldier::isAlive).count();
         long aliveM = miniBosses.stream().filter(MiniBoss::isAlive).count();
         g2.setFont(new Font("Serif", Font.BOLD, 12));
         g2.setColor(COL_RED_LIGHT);
-        g2.drawString("Musuh: " + alive + " prajurit  |  " + aliveM + " mini boss", 270, MAP_H + 20);
+        g2.drawString("Musuh: " + alive + " prajurit  |  " + aliveM + " mini boss", 270, startY + 22);
 
-        // Map 2 timer
+        // --- MAP 2 TIMER ---
         if (mapId == 2) {
             int secLeft = Math.max(0, (SURVIVAL_TARGET - survivalTicks) / 60);
             g2.setFont(new Font("Serif", Font.BOLD, 18));
             if (secLeft > 0) {
                 g2.setColor(secLeft < 5 ? COL_RED_LIGHT : COL_GOLD);
-                g2.drawString("WAKTU: " + secLeft + "s", 270, MAP_H + 42);
+                g2.drawString("WAKTU: " + secLeft + "s", 270, startY + 46);
             } else {
-                // Jika waktu habis, teks berubah memberi petunjuk baru
                 g2.setColor(COL_RED_LIGHT);
-                g2.drawString("PERINGATAN: KALAHKAN MINI BOSS!", 270, MAP_H + 42);
+                g2.drawString("PERINGATAN: KALAHKAN MINI BOSS!", 270, startY + 46);
             }
         }
 
-        // Boss HP
+        // --- BOSS HP (DIPINDAH KE ATAS BOSS) ---
         if (finalBoss != null && finalBoss.isAlive()) {
-            int bx = MAP_W / 2 - 150;
-            g2.setFont(new Font("Serif", Font.BOLD, 11));
-            g2.setColor(new Color(200, 0, 200));
-            g2.drawString("FINAL BOSS", bx, MAP_H + 18);
-            drawHPBar(g2, bx, MAP_H + 22, 300, 12, finalBoss.getHpRatio(), finalBoss.hp + "/" + finalBoss.maxHp);
+            int barW = 80; // Lebar bar HP (bisa kamu perbesar kalau kurang panjang)
+            int barH = 8;  // Tinggi bar HP
+
+            // Asumsi posisi boss menggunakan variabel .x dan .y
+            int bx = (int) finalBoss.getX() - (barW / 2);
+            int by = (int) finalBoss.getY() - 25;
+
+            // Gambar HP tanpa memunculkan teks angka (agar terlihat rapi mirip musuh biasa)
+            drawHPBar(g2, bx, by, barW, barH, finalBoss.getHpRatio(), "");
+
+            g2.setFont(new Font("Serif", Font.BOLD, 10));
             if (finalBoss.isEnraged()) {
                 g2.setColor(new Color(220, 100, 220));
-                g2.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 10));
-                g2.drawString("⚠ MENGAMUK!", bx + 310, MAP_H + 33);
+                g2.drawString("⚠ MENGAMUK", bx, by - 5);
+            } else {
+                g2.setColor(new Color(200, 0, 200));
+                g2.drawString("FINAL BOSS", bx + 10, by - 5);
             }
         }
 
-        // Controls hint
+        // --- CONTROLS HINT ---
         g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        g2.setColor(new Color(70, 60, 40));
-        g2.drawString("WASD: Gerak  |  ESC: Menu", MAP_W - 200, MAP_H + 20);
+        g2.setColor(new Color(140, 130, 110));
+        g2.drawString("WASD: Gerak  |  ESC: Menu", MAP_W - 180, startY + 22);
     }
 
     private void drawEndOverlay(Graphics2D g2, boolean won) {
@@ -807,10 +797,6 @@ public class BattleScreen extends BasePanel {
                     public float getRadius() {
                         return 22f;
                     }
-
-                    public void takeDamage(int dmg) { // Sesuaikan nama method damage game kamu
-                        s.takeDamage(dmg); // Salurkan damage ke soldier asli
-                    }
                 });
             }
         }
@@ -836,10 +822,6 @@ public class BattleScreen extends BasePanel {
 
                     public float getRadius() {
                         return 35f;
-                    } // MiniBoss lebih besar
-
-                    public void takeDamage(int dmg) { // Sesuaikan nama method damage game kamu
-                        mb.takeDamage(dmg); // Salurkan damage ke Mini Boss asli
                     }
                 });
             }
@@ -864,30 +846,19 @@ public class BattleScreen extends BasePanel {
 
                 public float getRadius() {
                     return 55f;
-                } // FinalBoss paling besar
+                }
             });
         }
 
-        float pX = player.getX();
-        float pY = player.getY();
-
-        // ===== TAHAP 1: MELINGKARI & JAGA JARAK DENGAN PLAYER =====
+        // ===== TAHAP 1: AMANKAN TINGGI TANAH (LOGIKA DORONG PLAYER DIHAPUS) =====
         for (GameEntity e : activeEnemies) {
-            float dx = e.getX() - pX;
-            float dist = (float) Math.abs(dx);
-            float attackRange = e.getRadius() + 20f;
-
-            if (dist < attackRange) {
-                // Jika terlalu dekat atau menembus player, dorong ke kiri atau kanan
-                float sign = (dx >= 0) ? 1f : -1f;
-                e.setX(pX + sign * attackRange);
-            }
-            // Amankan posisi Y agar selalu sejajar di tinggi tanah target
+            // Mengunci posisi Y musuh agar selalu menapak tanah kaku,
+            // tetapi membebaskan posisi X agar musuh bisa menumpuk masuk ke tubuh Player tanpa mendorongnya.
             float groundY = (MAP_H / 2f) + 130f;
             e.setY(groundY);
         }
 
-        // ===== TAHAP 2: SEPARATION (BERJEJER HORIZONTAL) =====
+        // ===== TAHAP 2: SEPARATION (SESAMA MUSUH TETAP SALING BERJEJER) =====
         for (int i = 0; i < activeEnemies.size(); i++) {
             GameEntity e1 = activeEnemies.get(i);
             for (int j = i + 1; j < activeEnemies.size(); j++) {
@@ -908,7 +879,7 @@ public class BattleScreen extends BasePanel {
 
                     float pushX = (dx / Math.abs(dx)) * (overlap / 2f);
 
-                    // Dorong kiri-kanan secara horizontal saja
+                    // Dorong kiri-kanan antar sesama musuh secara halus
                     e1.setX(e1.getX() + pushX);
                     e2.setX(e2.getX() - pushX);
                 }

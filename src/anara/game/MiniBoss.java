@@ -1,15 +1,14 @@
 package anara.game;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class MiniBoss extends Entity {
 
     private int attackCooldown = 40;
     private float animPhase = 0;
-    private int pattern = 0;
+    private int animTick = 0;
+    private boolean facingLeft = false;
 
     public MiniBoss(float x, float y) {
         super(x, y, 500, 35, 4, 2);
@@ -18,10 +17,13 @@ public class MiniBoss extends Entity {
     @Override
     public void update(float playerX, float playerY, int mapW, int mapH) {
         this.y = playerY;
-
         float miniBossSpeed = 2f;
         int attackRange = 45;
         float distanceX = Math.abs(this.x - playerX);
+
+        // Arah hadap
+        if (this.x > playerX + 10) facingLeft = true;
+        else if (this.x < playerX - 10) facingLeft = false;
 
         if (distanceX > attackRange) {
             if (this.x > playerX) {
@@ -34,9 +36,10 @@ public class MiniBoss extends Entity {
                 this.attackCooldown = 60;
             }
         }
-        if (this.attackCooldown > 0) {
-            this.attackCooldown--;
-        }
+
+        if (this.attackCooldown > 0) this.attackCooldown--;
+        animPhase += 0.08f;
+        animTick++;
     }
 
     public boolean canAttack(float px, float py) {
@@ -52,65 +55,55 @@ public class MiniBoss extends Entity {
     @Override
     public void draw(Graphics2D g2) {
         Graphics2D p = (Graphics2D) g2.create();
-
         int cx = (int) x, cy = (int) y;
 
-        float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
+        // Bayangan
+        p.setColor(new Color(0, 0, 0, 80));
+        p.fillOval(cx - 24, cy + 20, 48, 14);
 
-        // Aura
-        p.setColor(new Color(180, 40, 40, (int) (glow * 50)));
-        p.fillOval(cx - 32, cy - 32, 64, 64);
+        // Pilih sprite: bergantian attack1 & attack2
+        BufferedImage sprite = (animTick / 15 % 2 == 0)
+                ? anara.utils.AssetManager.miniBossAttack1
+                : anara.utils.AssetManager.miniBossAttack2;
 
-        // Body
-        p.setColor(new Color(80, 20, 20));
-        p.fillOval(cx - 22, cy - 22, 44, 44);
+        if (sprite != null) {
+            int spriteW = 96;
+            int spriteH = 96;
+            int drawX = cx - spriteW / 2;
+            int drawY = cy - spriteH + 20;
 
-        p.setColor(new Color(120, 30, 30));
-        p.fillOval(cx - 14, cy - 16, 28, 20);
+            Graphics2D sg = (Graphics2D) p.create();
+            if (facingLeft) {
+                sg.translate(drawX + spriteW, drawY);
+                sg.scale(-1, 1);
+                sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
+            } else {
+                sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
+            }
+            sg.dispose();
+        } else {
+            // Fallback shape
+            float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
+            p.setColor(new Color(180, 40, 40, (int) (glow * 50)));
+            p.fillOval(cx - 32, cy - 32, 64, 64);
+            p.setColor(new Color(80, 20, 20));
+            p.fillOval(cx - 22, cy - 22, 44, 44);
+        }
 
-        // Horns
-        p.setColor(new Color(60, 15, 15));
-
-        p.setStroke(new BasicStroke(
-                4f,
-                BasicStroke.CAP_ROUND,
-                BasicStroke.JOIN_ROUND
-        ));
-
-        p.drawLine(cx - 12, cy - 22, cx - 18, cy - 38);
-        p.drawLine(cx + 12, cy - 22, cx + 18, cy - 38);
-
-        // Eyes
-        p.setColor(new Color(255, 100, 0));
-
-        p.fillOval(cx - 8, cy - 18, 7, 7);
-        p.fillOval(cx + 1, cy - 18, 7, 7);
-
-        // HP
+        // HP bar
         p.setColor(new Color(40, 10, 10));
-        p.fillRect(cx - 28, cy + 28, 56, 7);
-
+        p.fillRect(cx - 36, cy + 28, 72, 7);
         p.setColor(new Color(200, 40, 40));
-        p.fillRect(
-                cx - 28,
-                cy + 28,
-                (int) (56 * getHpRatio()),
-                7
-        );
-
+        p.fillRect(cx - 36, cy + 28, (int) (72 * getHpRatio()), 7);
         p.setColor(new Color(80, 20, 20));
         p.setStroke(new BasicStroke(1f));
-        p.drawRect(cx - 28, cy + 28, 56, 7);
+        p.drawRect(cx - 36, cy + 28, 72, 7);
 
         // Label
         p.setFont(new Font("Serif", Font.BOLD, 9));
-
-        p.setColor(COL_RED);
-
+        p.setColor(new Color(220, 80, 80));
         p.drawString("MINI BOSS", cx - 22, cy + 26);
 
         p.dispose();
     }
-
-    private static final Color COL_RED = new Color(220, 80, 80);
 }

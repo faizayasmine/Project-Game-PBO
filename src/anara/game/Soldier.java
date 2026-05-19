@@ -9,8 +9,8 @@ public class Soldier extends Entity {
 
     private int attackCooldown = RNG.nextInt(60);
     private Color bodyColor;
-    private int animTick = 0;          // ← untuk animasi jalan
-    private boolean facingLeft = false; // ← untuk balik arah
+    private int animTick = 0;
+    private boolean facingLeft = false;
 
     public Soldier(float x, float y, int tier) {
         super(x, y, 40 + tier * 10, 8 + tier * 2, 1, 2);
@@ -21,8 +21,9 @@ public class Soldier extends Entity {
     public void update(float playerX, float playerY, int mapW, int mapH) {
         float soldierSpeed = 1.8f;
 
-        // Tentukan arah hadap
-        facingLeft = (this.x > playerX);
+        // Arah hadap dengan threshold agar tidak bergetar
+        if (this.x > playerX + 20) facingLeft = true;
+        else if (this.x < playerX - 20) facingLeft = false;
 
         if (this.x > playerX + 15) {
             this.x -= soldierSpeed;
@@ -31,7 +32,7 @@ public class Soldier extends Entity {
         }
 
         if (attackCooldown > 0) attackCooldown--;
-        animTick++; // ← update animasi
+        animTick++;
     }
 
     public boolean canAttack(float px, float py) {
@@ -70,7 +71,7 @@ public class Soldier extends Entity {
                     : anara.utils.AssetManager.soldierJalan2;
         }
 
-        // Gambar sprite dengan flip arah
+        // Gambar sprite
         if (sprite != null) {
             int spriteW = 72;
             int spriteH = 72;
@@ -78,25 +79,19 @@ public class Soldier extends Entity {
             int drawY = cy - spriteH + 20;
 
             Graphics2D sg = (Graphics2D) p.create();
-
             if (facingLeft && isAlive()) {
-                // Flip hanya saat hidup
+                // Flip horizontal pakai translate+scale (ukuran tetap sama)
                 sg.translate(drawX + spriteW, drawY);
                 sg.scale(-1, 1);
                 sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
             } else {
-                // Mati atau menghadap kanan → gambar normal
                 sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
             }
-
             sg.dispose();
         } else {
-            // Fallback
             p.setColor(bodyColor);
             p.fillRoundRect(cx - 11, cy - 13, 22, 26, 8, 8);
         }
-
-        // HP bar
 
         // HP bar
         drawEntityHP(p, cx, cy - 20, 36, getHpRatio());

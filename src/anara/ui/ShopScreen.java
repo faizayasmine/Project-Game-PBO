@@ -24,18 +24,14 @@ public class ShopScreen extends BasePanel {
     // Shop catalog
     private static final List<ShopItem> CATALOG = new ArrayList<>(Arrays.asList(
         // Weapons
-        new ShopItem("w1", "Pedang Besi",      "Pedang standar prajurit +10 ATK",  80,  10, ShopItem.ItemType.WEAPON),
-        new ShopItem("w2", "Pedang Baja",       "Baja tempa terbaik +20 ATK",       160, 20, ShopItem.ItemType.WEAPON),
-        new ShopItem("w3", "Pedang Kristal",    "Diberkati cahaya +35 ATK",         300, 35, ShopItem.ItemType.WEAPON),
+        new ShopItem("w1", "Iron Starter", "Pedang standar bawaan Kael (+10 ATK)",  80,  10, ShopItem.ItemType.WEAPON),
+        new ShopItem("w2", "Void Breaker", "Logam kuno bereaksi energi kutukan (+20 ATK)", 200, 20, ShopItem.ItemType.WEAPON),
+        new ShopItem("w3", "Seal Breaker", "Melepaskan energi Pecahan Segel. (+25 SKL)", 350, 25, ShopItem.ItemType.WEAPON),
+        new ShopItem("w4", "Aruna's Wrath", "Diberkati cahaya (+35 ATK)", 80, 35,  ShopItem.ItemType.WEAPON),
         // Skills
-        new ShopItem("s1", "Serangan Kilat",    "Kurangi cooldown serangan +5 SKL", 100, 5,  ShopItem.ItemType.SKILL),
-        new ShopItem("s2", "Ledakan Angin",     "AoE skill lebih kuat +15 SKL",     200, 15, ShopItem.ItemType.SKILL),
-        // Defense
-        new ShopItem("d1", "Tameng Kulit",      "Armor dasar +8 DEF",               90,  8,  ShopItem.ItemType.DEFENSE),
-        new ShopItem("d2", "Tameng Baja",       "Ketahanan tinggi +18 DEF",         180, 18, ShopItem.ItemType.DEFENSE),
-        // Items
-        new ShopItem("i1", "Ramuan Merah Kecil","Pulihkan 30 HP (sekali pakai)",    50,  30, ShopItem.ItemType.ITEM),
-        new ShopItem("i2", "Ramuan Merah Besar","Pulihkan 80 HP (sekali pakai)",    110, 80, ShopItem.ItemType.ITEM)
+        new ShopItem("s1", "Quickstrike", "Kurangi cooldown serangan (+5 SKL)", 100, 5, ShopItem.ItemType.SKILL),
+        new ShopItem("s2", "Windrage", "Serangan AoE memutar di sekitar Raka (+15 SKL)", 200, 15, ShopItem.ItemType.SKILL),
+        new ShopItem("s3", "Sealbreaker", "Melepaskan energi Pecahan Segel (+25 SKL)", 350, 25, ShopItem.ItemType.SKILL)
     ));
 
     public ShopScreen() {
@@ -308,8 +304,6 @@ public class ShopScreen extends BasePanel {
         switch (type) {
             case WEAPON: return new Color(180, 60, 60);
             case SKILL: return new Color(60, 80, 180);
-            case DEFENSE: return new Color(60, 140, 80);
-            case ITEM: return new Color(140, 100, 40);
             default: return COL_BORDER;
         }
     }

@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class ShopItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public enum ItemType { WEAPON, SKILL, ITEM, DEFENSE }
+    public enum ItemType { WEAPON, SKILL}
 
     private String id;
     private String name;

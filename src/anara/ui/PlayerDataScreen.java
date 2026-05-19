@@ -172,8 +172,6 @@ public class PlayerDataScreen extends BasePanel {
         switch (type) {
             case WEAPON: return new Color(180, 60, 60);
             case SKILL: return new Color(60, 80, 180);
-            case DEFENSE: return new Color(60, 140, 80);
-            case ITEM: return new Color(140, 100, 40);
             default: return COL_BORDER;
         }
     }

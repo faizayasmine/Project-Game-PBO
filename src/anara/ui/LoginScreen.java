@@ -28,7 +28,7 @@ public class LoginScreen extends BasePanel {
     }
 
     private void setupComponents() {
-        int w = 900, h = 650;
+        int w = 900, h = 580;
         int cx = w / 2;
 
         // Name input field

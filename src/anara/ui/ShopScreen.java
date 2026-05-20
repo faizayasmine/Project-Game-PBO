@@ -35,7 +35,7 @@ public class ShopScreen extends BasePanel {
         new ShopItem("w1","Sylvan Strike",  "Pedang kayu besi milik Kael (+10 ATK)",           80,  10, ShopItem.ItemType.WEAPON),
         new ShopItem("w2","Iron Starter",   "Pedang besi dasar untuk petualang pemula (+15 ATK)",120, 15, ShopItem.ItemType.WEAPON),
         new ShopItem("w3","Void Breaker",   "Logam kuno bereaksi energi kutukan (+20 ATK)",    200, 20, ShopItem.ItemType.WEAPON),
-        new ShopItem("w4","Aruna's Wrath",  "Pedang legendaris diberkati cahaya Aruna (+35 ATK)", 80, 35, ShopItem.ItemType.WEAPON)
+        new ShopItem("w4","Aruna's Wrath",  "Pedang legendaris diberkati cahaya Aruna (+35 ATK)", 350, 35, ShopItem.ItemType.WEAPON)
     ));
     private static final List<ShopItem> CATALOG_SKILL = new ArrayList<>(Arrays.asList(
         new ShopItem("s1","Quickstrike",  "Kurangi cooldown serangan (+5 SKL)",              100,  5, ShopItem.ItemType.SKILL),

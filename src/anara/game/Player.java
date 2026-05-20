@@ -13,6 +13,12 @@ public class Player extends Entity {
     private int defenseBonusExternal = 0;
     public boolean isAttacking = false;
     public int attackFrame = 0;
+    
+    // ── TAMBAHKAN VARIABLE BARU UNTUK SKILL ANIMASI ──────────────────────────
+    public boolean isSkilling = false;
+    public int skillFrame = 0;
+    // ─────────────────────────────────────────────────────────────────────────
+    
     private float animPhase = 0f;
     private boolean mainPlayer = false;
     private boolean jumping = false;
@@ -76,8 +82,6 @@ public class Player extends Entity {
         }
 
         // ===== LOGIKA JATUH DARI PLATFORM =====
-        // Jika player sedang dianggap di atas tanah (onGround) tapi di ketinggian platform,
-        // dan posisinya berjalan keluar dari batas kiri/kanan platform, buat dia jatuh!
         if (onGround && y == platY) {
             if (x < platXStart || x > platXEnd) {
                 onGround = false;
@@ -104,6 +108,7 @@ public class Player extends Entity {
         if (skillCooldown > 0) skillCooldown--;
         if (invincibleFrames > 0) invincibleFrames--;
 
+        // Update frame attack
         if (isAttacking) {
             attackFrame++;
             if (attackFrame > 12) {
@@ -111,6 +116,16 @@ public class Player extends Entity {
                 attackFrame = 0;
             }
         }
+
+        // ── UPDATE FRAME SKILL ────────────────────────────────────────────────
+        if (isSkilling) {
+            skillFrame++;
+            if (skillFrame > 20) { // Durasi pose skill (20 frame ~ 0.5 detik)
+                isSkilling = false;
+                skillFrame = 0;
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         // Update arah hadap berdasarkan gerakan
         if (dx < -0.1f) facingLeft = true;
@@ -136,13 +151,27 @@ public class Player extends Entity {
         attackCooldown = 25;
         isAttacking = true;
         attackFrame = 0;
+        
+        // Batalkan pose skill jika mendadak attack biasa
+        isSkilling = false; 
+        skillFrame = 0;
+        
         return attack + attackBonusExternal;
     }
 
+    // ── MODIFIKASI METHOD DOSKILL ────────────────────────────────────────────
     public int doSkill() {
         skillCooldown = 90;
+        isSkilling = true;  // Mengaktifkan state skill
+        skillFrame = 0;
+        
+        // Batalkan pose attack jika mendadak cast skill
+        isAttacking = false;
+        attackFrame = 0;
+        
         return (attack + attackBonusExternal) * 2;
     }
+    // ─────────────────────────────────────────────────────────────────────────
 
     public void hit(int dmg) {
         if (invincibleFrames > 0) return;
@@ -177,20 +206,23 @@ public class Player extends Entity {
         p.setColor(new Color(0, 0, 0, 80));
         p.fillOval(cx - 18, cy + 18, 36, 12);
 
-        // Pilih sprite sesuai kondisi
+        // ── SISTEM SELEKSI SPRITE PLAYER (DENGAN ASSET SKILL) ──────────────────
         BufferedImage sprite;
         if (!isAlive()) {
             sprite = anara.utils.AssetManager.playerEliminasi;
+        } else if (isSkilling) {
+            // Jika sedang skill, ambil sprite khusus dari AssetManager
+            sprite = anara.utils.AssetManager.playerSkill;
         } else if (isAttacking) {
             sprite = anara.utils.AssetManager.playerAttack;
-        } else if (Math.abs(dx) > 0.1f) {
+        } else if (Math.abs(dx) > 0.1f || jumping) { 
             sprite = anara.utils.AssetManager.playerLari;
         } else {
             sprite = anara.utils.AssetManager.playerBasic;
         }
+        // ─────────────────────────────────────────────────────────────────────
 
         // Gambar sprite dengan flip arah
-       // Gambar sprite dengan flip arah
         if (sprite != null) {
             int spriteW = 80;
             int spriteH = 80;
@@ -199,10 +231,8 @@ public class Player extends Entity {
 
             Graphics2D pg = (Graphics2D) p.create();
             if (!isAlive()) {
-                // Saat mati tidak perlu flip
                 pg.drawImage(sprite, drawX, drawY, spriteW, 50, null);
             } else if (facingLeft) {
-                // Flip horizontal yang benar
                 pg.translate(drawX + spriteW, drawY);
                 pg.scale(-1, 1);
                 pg.drawImage(sprite, 0, 0, spriteW, spriteH, null);

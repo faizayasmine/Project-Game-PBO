@@ -39,7 +39,7 @@ public class StartScreen extends BasePanel {
 
     // ── Load asset gambar (dengan debug lengkap) ──────────────────────────────
     private void loadAssets() {
-        String fileName = "tampilan.png";
+        String fileName = "start.png";
 
         String[] classpathPaths = {
             "/Assets/images/" + fileName,

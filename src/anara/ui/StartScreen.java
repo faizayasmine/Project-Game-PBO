@@ -6,68 +6,121 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.io.File;
+import java.net.URL;
 import java.util.Random;
 
 /**
- * StartScreen - Layar pembuka game "Survival Sylvan"
- * Tampil sebelum LoginScreen. Berisi judul, tagline, dan tombol mulai.
- * Wireframe: Semua placeholder siap diganti asset gambar.
- *
- * Cara integrasi ke GameEngine:
- *   - Tambahkan konstanta: public static final int SCREEN_START = 0;
- *   - Ganti urutan tampilan awal ke SCREEN_START
- *   - Dari StartScreen -> showScreen(GameEngine.SCREEN_LOGIN)
+ * StartScreen - Layar pembuka game "Survival Sylvan" Menggunakan asset gambar
+ * asli sebagai background dan murni menggunakan kustom font kustom dari lokal.
  */
 public class StartScreen extends BasePanel {
 
     // ── Animasi ──────────────────────────────────────────────────────────────
     private Timer animTimer;
-    private float glowPhase   = 0f;
-    private float floatPhase  = 0f;
-    private float starPhase   = 0f;
+    private float glowPhase = 0f;
+    private float starPhase = 0f;
     private int[] starX, starY;
     private float[] starBright;
 
-    // ── Background image (opsional) ──────────────────────────────────────────
-    // Uncomment dan sesuaikan path saat asset sudah siap:
-    // private Image bgImage;
-    // private Image characterImage;
+    // ── Background image & Custom Font ───────────────────────────────────────
+    private Image bgImage;
+    private Font customFont;
 
     public StartScreen() {
         setLayout(null);
         setOpaque(true);
         initStars();
-        // loadAssets(); // Uncomment saat asset tersedia
+        loadAssets();
+        loadCustomFont(); // Memuat font ari-w9500 dari direktori lokal Anda
         startAnimation();
         setupButton();
     }
 
-    // ── Asset loader (opsional) ──────────────────────────────────────────────
-    /*
+    // ── Load asset gambar (dengan debug lengkap) ──────────────────────────────
     private void loadAssets() {
-        bgImage        = new ImageIcon(getClass().getResource("/assets/images/sylvan_bg.png")).getImage();
-        characterImage = new ImageIcon(getClass().getResource("/assets/images/character_start.png")).getImage();
-    }
-    */
+        String fileName = "tampilan.png";
 
-    // ── Bintang acak di background ───────────────────────────────────────────
+        String[] classpathPaths = {
+            "/Assets/images/" + fileName,
+            "/assets/images/" + fileName,
+            "/Assets/Images/" + fileName,
+            "/" + fileName,
+            "Assets/images/" + fileName,
+            "assets/images/" + fileName,};
+
+        System.out.println("[StartScreen] Mencari: " + fileName);
+
+        for (String path : classpathPaths) {
+            URL url = getClass().getResource(path);
+            if (url != null) {
+                bgImage = new ImageIcon(url).getImage();
+                System.out.println("[StartScreen] Berhasil load dari: " + path);
+                return;
+            }
+        }
+
+        String[] fsPaths = {
+            "src/Assets/images/" + fileName,
+            "src/assets/images/" + fileName,
+            "Assets/images/" + fileName,
+            fileName,};
+        for (String path : fsPaths) {
+            java.io.File f = new java.io.File(path);
+            if (f.exists()) {
+                bgImage = new ImageIcon(f.getAbsolutePath()).getImage();
+                System.out.println("[StartScreen] Berhasil load dari filesystem: " + path);
+                return;
+            }
+        }
+
+        System.err.println("[StartScreen] Gambar tidak ditemukan di mana pun!");
+    }
+
+    // ── Load Custom Font dari Direktori Spesifik ─────────────────────────────
+    private void loadCustomFont() {
+        // Path absolut mengarah langsung ke folder font di Windows Anda
+        String fontPath = "C:/Users/Iqbal/Project-Game-PBO/src/Assets/font/ari-w9500-condensed-bold.ttf";
+        File fontFile = new File(fontPath);
+
+        if (fontFile.exists()) {
+            try {
+                // Membaca file font .ttf kustom
+                customFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
+                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                ge.registerFont(customFont);
+                System.out.println("[StartScreen] Font ari-w9500 berhasil dimuat dari: " + fontFile.getAbsolutePath());
+                return;
+            } catch (Exception e) {
+                System.err.println("[StartScreen] Gagal membaca berkas font di " + fontPath + " (" + e.getMessage() + ")");
+            }
+        } else {
+            System.err.println("[StartScreen] Berkas font TIDAK DITEMUKAN di path: " + fontPath);
+        }
+
+        // Fallback jika file tidak ditemukan atau error saat dibaca
+        System.err.println("[StartScreen] Menggunakan font sistem Monospaced sebagai cadangan.");
+        customFont = new Font("Monospaced", Font.BOLD, 12);
+    }
+
+    // ── Bintang kecil overlay ────────────────────────────────────────────────
     private void initStars() {
-        int n = 120;
-        starX      = new int[n];
-        starY      = new int[n];
+        int n = 40;
+        starX = new int[n];
+        starY = new int[n];
         starBright = new float[n];
         Random rnd = new Random(42);
         for (int i = 0; i < n; i++) {
-            starX[i]      = rnd.nextInt(900);
-            starY[i]      = rnd.nextInt(300);
-            starBright[i] = 0.3f + rnd.nextFloat() * 0.7f;
+            starX[i] = rnd.nextInt(900);
+            starY[i] = rnd.nextInt(200);
+            starBright[i] = 0.2f + rnd.nextFloat() * 0.5f;
         }
     }
 
     // ── Tombol "Mulai Petualangan" ───────────────────────────────────────────
     private void setupButton() {
-        int cx = 900 / 2;
-        JButton btnStart = new JButton("Mulai Petualangan  >>>") {
+        int cx = 900 / 2; // Titik tengah layar (X = 450)
+        JButton btnStart = new JButton("Mulai Petualangan   >>>") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -76,60 +129,77 @@ public class StartScreen extends BasePanel {
                 boolean hov = getModel().isRollover();
                 boolean prs = getModel().isPressed();
 
-                // Background tombol hijau seperti gambar referensi
                 Color bgTop = hov ? new Color(120, 180, 60) : new Color(90, 145, 40);
                 Color bgBot = hov ? new Color(70, 120, 25) : new Color(50, 95, 15);
                 GradientPaint gp = new GradientPaint(0, 0, bgTop, 0, getHeight(), bgBot);
                 g2.setPaint(gp);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
 
-                // Border
                 g2.setColor(new Color(180, 220, 80));
                 g2.setStroke(new BasicStroke(2f));
                 g2.drawRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 8, 8);
 
-                // Pressed offset
+                g2.setColor(new Color(255, 255, 255, 40));
+                g2.fillRoundRect(3, 3, getWidth() - 6, getHeight() / 2 - 3, 6, 6);
+
                 int dy = prs ? 2 : 0;
 
-                // Teks pixel-style
-                g2.setFont(new Font("Monospaced", Font.BOLD, 16));
-                g2.setColor(new Color(30, 20, 10));
+                // Menggunakan font baru Anda dengan ukuran 18f
+                g2.setFont(customFont.deriveFont(Font.PLAIN, 18f));
+
                 FontMetrics fm = g2.getFontMetrics();
                 int tx = (getWidth() - fm.stringWidth(getText())) / 2;
-                g2.drawString(getText(), tx, (getHeight() + fm.getAscent() - fm.getDescent()) / 2 + dy);
+                int ty = (getHeight() + fm.getAscent() - fm.getDescent()) / 2 + dy;
+
+                g2.setColor(new Color(0, 0, 0, 100));
+                g2.drawString(getText(), tx + 1, ty + 1);
+                g2.setColor(new Color(240, 255, 200));
+                g2.drawString(getText(), tx, ty);
 
                 g2.dispose();
             }
         };
-        btnStart.setBounds(cx - 130, 400, 260, 48);
+
+        // ── PANDUAN MENGGESER TOMBOL ──────────────────────────────────────────
+        // Parameter: setBounds(X, Y, Lebar, Tinggi)
+        // Lebar dinaikkan jadi 400 agar teks ukuran 18f muat sempurna.
+        // cx - (Lebar/2) -> 450 - 200 = 250 (Membuat tombol center otomatis)
+        int tombolX = cx - 390; // geser kanan kiri
+        int tombolY = 430;      // <--- UBAH ANGKA INI UNTUK MENGGESER KE ATAS / BAWAH (misal: 410, 440, dll)
+
+        btnStart.setBounds(tombolX, tombolY, 400, 55);
+        // ──────────────────────────────────────────────────────────────────────
+
         btnStart.setOpaque(false);
         btnStart.setContentAreaFilled(false);
         btnStart.setBorderPainted(false);
         btnStart.setFocusPainted(false);
         btnStart.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnStart.addActionListener(e -> {
-            // Ke LayarLogin
-            GameEngine.getInstance().showScreen(GameEngine.SCREEN_LOGIN);
-        });
+        btnStart.addActionListener(e
+                -> GameEngine.getInstance().showScreen(GameEngine.SCREEN_LOGIN)
+        );
         add(btnStart);
     }
 
-    // ── Animasi timer ────────────────────────────────────────────────────────
     private void startAnimation() {
         animTimer = new Timer(30, e -> {
-            glowPhase  += 0.04f;
-            floatPhase += 0.03f;
-            starPhase  += 0.02f;
-            if (glowPhase  > Math.PI * 2) glowPhase  = 0;
-            if (floatPhase > Math.PI * 2) floatPhase = 0;
-            if (starPhase  > Math.PI * 2) starPhase  = 0;
+            glowPhase += 0.04f;
+            starPhase += 0.02f;
+            if (glowPhase > Math.PI * 2) {
+                glowPhase = 0;
+            }
+            if (starPhase > Math.PI * 2) {
+                starPhase = 0;
+            }
             repaint();
         });
         animTimer.start();
     }
 
     public void stopAnimation() {
-        if (animTimer != null) animTimer.stop();
+        if (animTimer != null) {
+            animTimer.stop();
+        }
     }
 
     // ── Render utama ─────────────────────────────────────────────────────────
@@ -137,196 +207,103 @@ public class StartScreen extends BasePanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,       RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,  RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
         int w = getWidth(), h = getHeight();
 
         // ── 1. BACKGROUND ────────────────────────────────────────────────────
-        // Saat bgImage tersedia, ganti blok ini:
-        //   g2.drawImage(bgImage, 0, 0, w, h, this);
-        // Sekarang: gradient placeholder ungu-biru malam
-        GradientPaint bg = new GradientPaint(
-            0, 0,   new Color(18, 10, 35),
-            0, h/2, new Color(35, 20, 60),
-            true
-        );
-        g2.setPaint(bg);
-        g2.fillRect(0, 0, w, h);
+        if (bgImage != null) {
+            int imgW = bgImage.getWidth(this);
+            int imgH = bgImage.getHeight(this);
+            if (imgW > 0 && imgH > 0) {
+                double scaleX = (double) w / imgW;
+                double scaleY = (double) h / imgH;
+                double scale = Math.max(scaleX, scaleY);
+                int drawW = (int) (imgW * scale);
+                int drawH = (int) (imgH * scale);
+                int offX = (w - drawW) / 2;
+                int offY = (h - drawH) / 2;
+                g2.drawImage(bgImage, offX, offY, drawW, drawH, this);
+            } else {
+                drawFallbackBg(g2, w, h);
+            }
 
-        // Lapisan bawah: hijau gelap (hutan)
-        GradientPaint groundGrad = new GradientPaint(
-            0, h * 0.55f, new Color(15, 40, 15),
-            0, h,         new Color(5, 15, 5)
-        );
-        g2.setPaint(groundGrad);
-        g2.fillRect(0, (int)(h * 0.55f), w, h);
+            GradientPaint textAreaOverlay = new GradientPaint(
+                    0, 0, new Color(0, 0, 0, 20),
+                    w * 0.58f, 0, new Color(0, 0, 0, 20)
+            );
+            g2.setPaint(textAreaOverlay);
+            g2.fillRect(0, 0, w, h);
 
-        // Bukit silhouette kiri
-        drawHillSilhouette(g2, w, h);
+            GradientPaint bottomOverlay = new GradientPaint(
+                    0, h * 0.6f, new Color(0, 0, 0, 0),
+                    0, h, new Color(0, 0, 0, 130)
+            );
+            g2.setPaint(bottomOverlay);
+            g2.fillRect(0, (int) (h * 0.6f), w, h);
 
-        // ── 2. BINTANG ───────────────────────────────────────────────────────
+        } else {
+            drawFallbackBg(g2, w, h);
+        }
+
+        // ── 2. BINTANG OVERLAY ───────────────────────────────────────────────
         for (int i = 0; i < starX.length; i++) {
-            float b = starBright[i] * (0.6f + 0.4f * (float) Math.sin(starPhase + i * 0.5f));
+            float b = starBright[i] * (0.5f + 0.5f * (float) Math.sin(starPhase + i * 0.7f));
             g2.setColor(new Color(1f, 1f, 1f, b));
-            int sz = (i % 5 == 0) ? 2 : 1;
+            int sz = (i % 7 == 0) ? 2 : 1;
             g2.fillOval(starX[i], starY[i], sz, sz);
         }
 
-        // ── 3. PLACEHOLDER KARAKTER (kanan tengah) ───────────────────────────
-        // Ganti dengan: g2.drawImage(characterImage, cx + 80, (int)(h*0.25f), 220, 320, this);
-        float charFloat = (float) Math.sin(floatPhase) * 4f;
-        drawCharacterPlaceholder(g2, w - 230, (int)(h * 0.25f + charFloat));
+        // ── 3. POSISI KATA (DISET SEBAGAI KOORDINAT UTAMA TAGLINE) ───────────
+        // Menggunakan font baru Anda dengan ukuran
+        g2.setFont(customFont.deriveFont(Font.PLAIN, 18f));
 
-        // ── 4. KASTIL SILHOUETTE (background kanan) ──────────────────────────
-        drawCastleSilhouette(g2, w - 100, (int)(h * 0.05f));
+        int taglineX = 65;
+        int taglineY1 = 350;
+        int taglineY2 = 375;
 
-        // ── 5. JUDUL "Survival SYLVAN" ───────────────────────────────────────
-        int titleX = 40;
-        int titleY = 80;
+        // Bayangan Teks (Hitam)
+        g2.setColor(new Color(0, 0, 0, 220));
+        g2.drawString("\"Masuki liar dan misteriusnya Sylvan, tempat", taglineX + 2, taglineY1 + 2);
+        g2.drawString("insting survivalmu diuji di setiap langkah.\"", taglineX + 2, taglineY2 + 2);
 
-        // Shadow
-        g2.setFont(new Font("Monospaced", Font.BOLD, 52));
-        g2.setColor(new Color(0, 0, 0, 120));
-        g2.drawString("Survival", titleX + 3, titleY + 3);
-        g2.setFont(new Font("Monospaced", Font.BOLD, 70));
-        g2.drawString("SYLVAN", titleX + 3, titleY + 68 + 3);
+        // Teks Utama (Putih Krem Retro)
+        g2.setColor(new Color(235, 235, 210, 240));
+        g2.drawString("\"Masuki liar dan misteriusnya Sylvan, tempat", taglineX, taglineY1);
+        g2.drawString("insting survivalmu diuji di setiap langkah.\"", taglineX, taglineY2);
 
-        // Glow
-        float glow = (float)(0.6 + 0.4 * Math.sin(glowPhase));
-        g2.setColor(new Color(160, 220, 80, (int)(glow * 60)));
-        g2.setFont(new Font("Monospaced", Font.BOLD, 52));
-        g2.drawString("Survival", titleX - 1, titleY - 1);
-        g2.setFont(new Font("Monospaced", Font.BOLD, 70));
-        g2.drawString("SYLVAN", titleX - 1, titleY + 68 - 1);
-
-        // Teks utama
-        g2.setColor(new Color(200, 240, 100));
-        g2.setFont(new Font("Monospaced", Font.BOLD, 52));
-        g2.drawString("Survival", titleX, titleY);
-        g2.setFont(new Font("Monospaced", Font.BOLD, 70));
-        g2.drawString("SYLVAN", titleX, titleY + 68);
-
-        // ── 6. TAGLINE ───────────────────────────────────────────────────────
-        g2.setFont(new Font("SansSerif", Font.ITALIC, 13));
-        g2.setColor(new Color(200, 200, 180, 200));
-        String line1 = "\"Masuki liar dan misteriusnya Sylvan, tempat";
-        String line2 = "insting survivalmu diuji di setiap langkah.\"";
-        g2.drawString(line1, titleX, titleY + 148);
-        g2.drawString(line2, titleX, titleY + 164);
-
-        // ── 7. MUSUH KECIL (placeholder zombie/skeleton kiri bawah) ─────────
-        drawEnemyPlaceholder(g2, (int)(w * 0.38f), (int)(h * 0.72f));
-
-        // ── 8. FOOTER ────────────────────────────────────────────────────────
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 10));
-        g2.setColor(new Color(100, 100, 80, 150));
-        g2.drawString("© Anara Game Studio  |  Survival Sylvan", w / 2 - 130, h - 10);
+        // ── 4. FOOTER ────────────────────────────────────────────────────────
+        // Menggunakan font baru Anda dengan ukuran
+        g2.setFont(customFont.deriveFont(14f));
+        g2.setColor(new Color(180, 180, 160, 150));
+        String footer = "© Game PBO | Survival Sylvan";
+        FontMetrics fm = g2.getFontMetrics();
+        g2.drawString(footer, (w - fm.stringWidth(footer)) / 2, h - 15);
 
         g2.dispose();
     }
 
-    // ── Helper shapes ─────────────────────────────────────────────────────────
+    // ── Fallback background ───────────────────────────────────────────────────
+    private void drawFallbackBg(Graphics2D g2, int w, int h) {
+        GradientPaint bg = new GradientPaint(
+                0, 0, new Color(18, 10, 35),
+                0, h / 2, new Color(35, 20, 60),
+                true
+        );
+        g2.setPaint(bg);
+        g2.fillRect(0, 0, w, h);
 
-    private void drawHillSilhouette(Graphics2D g2, int w, int h) {
-        // Bukit hijau gelap
-        Polygon hill = new Polygon();
-        hill.addPoint(0, h);
-        hill.addPoint(0, (int)(h * 0.58f));
-        hill.addPoint((int)(w * 0.15f), (int)(h * 0.42f));
-        hill.addPoint((int)(w * 0.35f), (int)(h * 0.55f));
-        hill.addPoint((int)(w * 0.5f), (int)(h * 0.48f));
-        hill.addPoint((int)(w * 0.65f), (int)(h * 0.58f));
-        hill.addPoint(w, (int)(h * 0.52f));
-        hill.addPoint(w, h);
-        g2.setColor(new Color(10, 35, 10, 220));
-        g2.fillPolygon(hill);
+        GradientPaint groundGrad = new GradientPaint(
+                0, h * 0.55f, new Color(15, 40, 15),
+                0, h, new Color(5, 15, 5)
+        );
+        g2.setPaint(groundGrad);
+        g2.fillRect(0, (int) (h * 0.55f), w, h);
 
-        // Tepi lebih terang
-        g2.setColor(new Color(30, 80, 30, 100));
-        g2.setStroke(new BasicStroke(2f));
-        g2.drawPolyline(hill.xpoints, hill.ypoints, hill.npoints - 2);
-    }
-
-    /**
-     * Placeholder karakter utama.
-     * Ganti dengan g2.drawImage(characterImage, x, y, w, h, this) saat asset siap.
-     */
-    private void drawCharacterPlaceholder(Graphics2D g2, int x, int y) {
-        // Label wireframe
-        g2.setColor(new Color(255, 255, 255, 40));
-        g2.fillRoundRect(x, y, 160, 260, 12, 12);
-        g2.setColor(new Color(160, 220, 80, 120));
-        g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
-                1f, new float[]{4, 4}, 0));
-        g2.drawRoundRect(x, y, 160, 260, 12, 12);
-
-        // Ikon orang
-        g2.setColor(new Color(160, 220, 80, 80));
-        g2.fillOval(x + 55, y + 20, 50, 50);          // kepala
-        g2.fillRoundRect(x + 50, y + 72, 60, 90, 8, 8); // badan
-        g2.fillRoundRect(x + 30, y + 80, 22, 70, 6, 6); // lengan kiri
-        g2.fillRoundRect(x + 108, y + 80, 22, 70, 6, 6);// lengan kanan
-        g2.fillRoundRect(x + 50, y + 162, 24, 75, 6, 6);// kaki kiri
-        g2.fillRoundRect(x + 86, y + 162, 24, 75, 6, 6);// kaki kanan
-
-        // Tongkat/staff
-        g2.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(new Color(100, 160, 200, 150));
-        g2.drawLine(x + 130, y + 50, x + 130, y + 240);
-        g2.fillOval(x + 122, y + 40, 16, 16);
-
-        // Teks label
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 10));
-        g2.setColor(new Color(160, 220, 80, 160));
-        g2.drawString("[CHARACTER SPRITE]", x - 10, y + 280);
-    }
-
-    /**
-     * Placeholder musuh kecil (zombie/skeleton).
-     */
-    private void drawEnemyPlaceholder(Graphics2D g2, int x, int y) {
-        g2.setColor(new Color(255, 255, 255, 30));
-        g2.fillRoundRect(x, y, 70, 80, 8, 8);
-        g2.setColor(new Color(200, 100, 80, 100));
-        g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
-                1f, new float[]{3, 3}, 0));
-        g2.drawRoundRect(x, y, 70, 80, 8, 8);
-
-        g2.setColor(new Color(200, 100, 80, 80));
-        g2.fillOval(x + 20, y + 8, 30, 30);
-        g2.fillRoundRect(x + 22, y + 38, 26, 35, 4, 4);
-
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 9));
-        g2.setColor(new Color(200, 100, 80, 150));
-        g2.drawString("[ENEMY]", x + 5, y + 95);
-    }
-
-    /**
-     * Silhouette kastil sederhana di background kanan.
-     */
-    private void drawCastleSilhouette(Graphics2D g2, int x, int y) {
-        g2.setColor(new Color(50, 30, 70, 160));
-
-        // Menara utama
-        g2.fillRect(x - 20, y + 40, 40, 100);
-        // Puncak menara
-        int[] xp = {x - 22, x, x + 22};
-        int[] yp = {y + 42, y + 10, y + 42};
-        g2.fillPolygon(xp, yp, 3);
-
-        // Menara kecil kiri
-        g2.fillRect(x - 55, y + 60, 25, 80);
-        int[] xp2 = {x - 57, x - 42, x - 28};
-        int[] yp2 = {y + 62, y + 35, y + 62};
-        g2.fillPolygon(xp2, yp2, 3);
-
-        // Tembok
-        g2.fillRect(x - 80, y + 100, 80, 40);
-
-        // Jendela
-        g2.setColor(new Color(255, 220, 80, 60));
-        g2.fillRect(x - 8, y + 60, 16, 22);
-        g2.fillRect(x - 47, y + 78, 10, 14);
+        g2.setFont(customFont.deriveFont(14f));
+        g2.setColor(new Color(255, 100, 100, 200));
+        g2.drawString("[BG IMAGE NOT FOUND - cek Output untuk path debug]", 20, h - 30);
     }
 }

@@ -132,7 +132,7 @@ public class BattleScreen extends BasePanel {
                 break;
             case 3:
                 player.setX(80);
-                player.setY((MAP_H / 2f) + 130f);
+                player.setY(460f);
                 finishArea = new Rectangle(WORLD_W - 120, MAP_H / 2 - 60, 80, 120);
                 miniBossSpawned = false;
                 reachedFinish = false;
@@ -230,7 +230,7 @@ int groundY = 460;
         }
         if (mapId == 1 && remainingSoldiersToSpawn == 0 && soldiers.stream().noneMatch(s -> s.isAlive()) && !miniBossSpawned) {
             miniBosses.clear();
-            miniBosses.add(new MiniBoss((int) (player.getX() + 300), (int) ((MAP_H / 2) + 130)));
+           miniBosses.add(new MiniBoss((int) (player.getX() + 300), 460));
             miniBossSpawned = true;
             showNotif("PERINGATAN: MINI BOSS TELAH MUNCUL!", 180);
         }
@@ -246,7 +246,7 @@ int groundY = 460;
     if (!miniBossSpawned && spawnCooldown <= 0) {
         float x = player.getX() + 300;
         if (x < WORLD_W - 600) {
-            soldiers.add(new Soldier((int) x, (int) ((MAP_H / 2) + 130), 2));
+            soldiers.add(new Soldier((int) x, 460, 2));
         }
         spawnCooldown = 120;
     }
@@ -269,7 +269,8 @@ int groundY = 460;
             if (finalBoss != null && finalBoss.isAlive()) {
                 bossSpawnCooldown--;
                 if (bossSpawnCooldown <= 0) {
-                    int spawnAtGroundY = (int) ((MAP_H / 2) + 130);
+                   
+int spawnAtGroundY = 460;
                     soldiers.add(new Soldier(
                             (int) (finalBoss.getX() + new Random().nextInt(200) - 100),
                             spawnAtGroundY,
@@ -618,17 +619,17 @@ int groundY = 460;
         // Kunci tinggi area HUD hitam
         int fixedHudH = 90;
         int startY = getHeight() - fixedHudH;
-
-        // --- PIJAKAN / GROUND BAWAH ---
-        int groundHeight = 80;
-        int groundY = startY - groundHeight;
-
-        g2.setColor(new Color(45, 40, 35));
-        g2.fillRect(0, groundY, MAP_W, groundHeight);
-
-        g2.setColor(new Color(75, 65, 55));
-        g2.setStroke(new BasicStroke(2f));
-        g2.drawLine(0, groundY, MAP_W, groundY);
+//
+//        // --- PIJAKAN / GROUND BAWAH ---
+//        int groundHeight = 80;
+//        int groundY = startY - groundHeight;
+//
+//        g2.setColor(new Color(45, 40, 35));
+//        g2.fillRect(0, groundY, MAP_W, groundHeight);
+//
+//        g2.setColor(new Color(75, 65, 55));
+//        g2.setStroke(new BasicStroke(2f));
+//        g2.drawLine(0, groundY, MAP_W, groundY);
 
         // --- BACKGROUND HUD HITAM ---
         g2.setColor(new Color(8, 6, 14));

@@ -10,6 +10,7 @@ public class AssetManager {
     public static BufferedImage playerBasic;
     public static BufferedImage playerAttack;
     public static BufferedImage playerLari;
+    public static BufferedImage playerSkill;
     public static BufferedImage playerEliminasi;
     public static BufferedImage soldierBasic;
     public static BufferedImage soldierJalan1;
@@ -35,6 +36,7 @@ public static BufferedImage map2Foreground; // batu
         playerBasic = load("/assets/images/playerbasic.png");
         playerAttack = load("/assets/images/playerattack.png");
         playerLari = load("/assets/images/playerlari.png");
+        playerSkill = load("/assets/images/playerskill.png");
         playerEliminasi = load("/assets/images/playerelminasi.png");
         soldierBasic = load("/assets/images/soliderbasic.png");
         soldierJalan1 = load("/assets/images/soliderjalan1.png");
@@ -47,7 +49,7 @@ public static BufferedImage map2Foreground; // batu
         finalBossBasic = load("/assets/images/finalbosbasic.png");
         finalBossAttack1 = load("/assets/images/finalbosattack1.png");
         map1Background = load("/assets/images/map1.png");
-        beranda = load("/assets/images/beranda.png");
+        beranda = load("/assets/images/tampilan.png");
         map3Background = load("/assets/images/MAP3.png");
         Shop = load("/assets/images/shop.png");
         senjata1 = load("/assets/images/senjata1.png");

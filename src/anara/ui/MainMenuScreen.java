@@ -76,18 +76,6 @@ private Rectangle getBtnRect(int index) {
     int y = startY + row * (BTN_H + 14);
     return new Rectangle(x, y, BTN_W, BTN_H);
 }
-//    int cols = 2;
-//    int col = index % cols;
-//    int row = index / cols;
-//    // Geser startX ke kanan, dari w/2 - BTN_W - 15 jadi w/2 - BTN_W + 50
-//    int startX = getWidth() / 2 - BTN_W + 50;
-//    int startY = getHeight() - 180;
-//    int x = startX + col * (BTN_W + 20);
-//    int y = startY + row * (BTN_H + 14);
-//    return new Rectangle(x, y, BTN_W, BTN_H);
-
-    
-
     private void handleMenuClick(int index) {
         switch (index) {
             case 0:
@@ -136,9 +124,12 @@ private Rectangle getBtnRect(int index) {
         int w = getWidth(), h = getHeight();
 
         // ===== BACKGROUND =====
-        if (AssetManager.beranda!= null) {
+        
+        if (AssetManager.beranda != null) {
             g2.drawImage(AssetManager.beranda, 0, 0, w, h, null);
-        } else {
+        } else if (AssetManager.beranda != null) {
+            g2.drawImage(AssetManager.beranda, 0, 0, w, h, null);
+        }else {
             // Fallback gradient
             GradientPaint bg = new GradientPaint(0, 0, new Color(10, 5, 25), 0, h, new Color(30, 15, 50));
             g2.setPaint(bg);
@@ -162,13 +153,7 @@ private Rectangle getBtnRect(int index) {
         for (int i = 0; i < MENU_LABELS.length; i++) {
             drawFancyButton(g2, i);
         }
-
-//        // ===== FOOTER =====
-//        g2.setFont(new Font("Serif", Font.ITALIC, 11));
-//        g2.setColor(new Color(180, 160, 120, 160));
-//        String footer = "Takdir menantimu, prajurit...";
-//        g2.drawString(footer, w / 2 - g2.getFontMetrics().stringWidth(footer) / 2, h - 12);
-
+        
         g2.dispose();
     }
 
@@ -178,18 +163,7 @@ private Rectangle getBtnRect(int index) {
         g2.setColor(new Color(220, 175, 60, (int) (glow * 60)));
         g2.setFont(new Font("Serif", Font.BOLD, 72));
         FontMetrics fm = g2.getFontMetrics();
-//        String title = "SURVIVAL SYLVAN";
-//        int tx = w / 2 - fm.stringWidth(title) / 2;
-//
-//        // Shadow judul
-//        g2.setColor(new Color(0, 0, 0, 180));
-//        g2.drawString(title, tx + 3, 83);
-//
-//        // Judul utama dengan gradient
-//        GradientPaint titleGrad = new GradientPaint(tx, 40, new Color(255, 220, 80), tx + fm.stringWidth(title), 80, new Color(200, 140, 40));
-//        g2.setPaint(titleGrad);
-//        g2.drawString(title, tx, 80);
-
+        
         // Garis dekorasi bawah judul
         g2.setColor(new Color(220, 175, 60, 180));
         g2.setStroke(new BasicStroke(2f));

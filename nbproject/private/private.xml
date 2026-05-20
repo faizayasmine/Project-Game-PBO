@@ -3,6 +3,7 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+<<<<<<< HEAD
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/main/Main.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/ui/MainMenuScreen.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/ui/ShopScreen.java</file>
@@ -24,6 +25,18 @@
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/ui/BattleScreen.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/audio/SoundManager.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/utils/SaveManager.java</file>
+=======
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/ui/StartScreen.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/ui/LoginScreen.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/model/ShopItem.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/ui/ShopScreen.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/game/Player.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/model/PlayerData.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/utils/AssetManager.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/ui/MainMenuScreen.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/ui/BattleScreen.java</file>
+            <file>file:/C:/Users/Iqbal/Project-Game-PBO/src/anara/ui/MapSelectScreen.java</file>
+>>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
         </group>
     </open-files>
 </project-private>

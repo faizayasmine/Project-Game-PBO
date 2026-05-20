@@ -14,7 +14,16 @@ public class Player extends Entity {
     public boolean isAttacking = false;
     public boolean isUsingSkill = false;
     public int attackFrame = 0;
+<<<<<<< HEAD
     private int skillFrame = 0;
+=======
+    
+    // ── TAMBAHKAN VARIABLE BARU UNTUK SKILL ANIMASI ──────────────────────────
+    public boolean isSkilling = false;
+    public int skillFrame = 0;
+    // ─────────────────────────────────────────────────────────────────────────
+    
+>>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
     private float animPhase = 0f;
     private boolean mainPlayer = false;
     private boolean jumping = false;
@@ -78,6 +87,7 @@ public class Player extends Entity {
                 velocityY = 0;
                 return;
             }
+<<<<<<< HEAD
             // Jatuh dari platform
             if (onGround && y == platY) {
                 if (x < pxStart || x > pxEnd) {
@@ -85,6 +95,24 @@ public class Player extends Entity {
                     jumping = true;
                     velocityY = 0;
                 }
+=======
+        }
+
+        // ===== LOGIKA LANDING DI TANAH DASAR =====
+        if (y >= groundY) {
+            y = groundY;
+            jumping = false;
+            onGround = true;
+            velocityY = 0;
+        }
+
+        // ===== LOGIKA JATUH DARI PLATFORM =====
+        if (onGround && y == platY) {
+            if (x < platXStart || x > platXEnd) {
+                onGround = false;
+                jumping = true;
+                velocityY = 0; // Mulai jatuh bebas dengan gravitasi
+>>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
             }
         }
     }
@@ -115,14 +143,34 @@ public class Player extends Entity {
         if (skillCooldown > 0)    skillCooldown--;
         if (invincibleFrames > 0) invincibleFrames--;
 
+        // Update frame attack
         if (isAttacking) {
             attackFrame++;
             if (attackFrame > 12) { isAttacking = false; attackFrame = 0; }
         }
 
+<<<<<<< HEAD
         if (isUsingSkill) {
             skillFrame++;
             if (skillFrame > 20) { isUsingSkill = false; skillFrame = 0; }
+=======
+        // ── UPDATE FRAME SKILL ────────────────────────────────────────────────
+        if (isSkilling) {
+            skillFrame++;
+            if (skillFrame > 20) { // Durasi pose skill (20 frame ~ 0.5 detik)
+                isSkilling = false;
+                skillFrame = 0;
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        // Update arah hadap berdasarkan gerakan
+        if (dx < -0.1f) facingLeft = true;
+        else if (dx > 0.1f) facingLeft = false;
+
+        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+            angle = (float) Math.atan2(dy, dx);
+>>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
         }
 
         if (dx < -0.1f)      facingLeft = true;
@@ -141,17 +189,40 @@ public class Player extends Entity {
 
     public int doAttack() {
         attackCooldown = 25;
+<<<<<<< HEAD
         isAttacking    = true;
         attackFrame    = 0;
+=======
+        isAttacking = true;
+        attackFrame = 0;
+        
+        // Batalkan pose skill jika mendadak attack biasa
+        isSkilling = false; 
+        skillFrame = 0;
+        
+>>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
         return attack + attackBonusExternal;
     }
 
+    // ── MODIFIKASI METHOD DOSKILL ────────────────────────────────────────────
     public int doSkill() {
+<<<<<<< HEAD
         skillCooldown  = 90;
         isUsingSkill   = true;
         skillFrame     = 0;
+=======
+        skillCooldown = 90;
+        isSkilling = true;  // Mengaktifkan state skill
+        skillFrame = 0;
+        
+        // Batalkan pose attack jika mendadak cast skill
+        isAttacking = false;
+        attackFrame = 0;
+        
+>>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
         return (attack + attackBonusExternal) * 2;
     }
+    // ─────────────────────────────────────────────────────────────────────────
 
     public void hit(int dmg) {
         if (invincibleFrames > 0) return;
@@ -181,6 +252,7 @@ public class Player extends Entity {
         p.setColor(new Color(0, 0, 0, 80));
         p.fillOval(cx - 18, cy + 18, 36, 12);
 
+<<<<<<< HEAD
         if (!blinkHide) {
             BufferedImage sprite;
             if (!isAlive()) {
@@ -189,6 +261,38 @@ public class Player extends Entity {
                 sprite = anara.utils.AssetManager.playerAttack;
             } else if (Math.abs(dx) > 0.1f) {
                 sprite = anara.utils.AssetManager.playerLari;
+=======
+        // ── SISTEM SELEKSI SPRITE PLAYER (DENGAN ASSET SKILL) ──────────────────
+        BufferedImage sprite;
+        if (!isAlive()) {
+            sprite = anara.utils.AssetManager.playerEliminasi;
+        } else if (isSkilling) {
+            // Jika sedang skill, ambil sprite khusus dari AssetManager
+            sprite = anara.utils.AssetManager.playerSkill;
+        } else if (isAttacking) {
+            sprite = anara.utils.AssetManager.playerAttack;
+        } else if (Math.abs(dx) > 0.1f || jumping) { 
+            sprite = anara.utils.AssetManager.playerLari;
+        } else {
+            sprite = anara.utils.AssetManager.playerBasic;
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        // Gambar sprite dengan flip arah
+        if (sprite != null) {
+            int spriteW = 80;
+            int spriteH = 80;
+            int drawX = cx - spriteW / 2;
+            int drawY = cy - spriteH + 20;
+
+            Graphics2D pg = (Graphics2D) p.create();
+            if (!isAlive()) {
+                pg.drawImage(sprite, drawX, drawY, spriteW, 50, null);
+            } else if (facingLeft) {
+                pg.translate(drawX + spriteW, drawY);
+                pg.scale(-1, 1);
+                pg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
+>>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
             } else {
                 sprite = anara.utils.AssetManager.playerBasic;
             }

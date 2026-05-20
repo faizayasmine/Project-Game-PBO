@@ -1,16 +1,18 @@
 package anara.game;
-
 import static anara.game.Entity.RNG;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 public class Soldier extends Entity {
-
     private int attackCooldown = RNG.nextInt(60);
     private Color bodyColor;
     private int animTick = 0;
     private boolean facingLeft = false;
+
+    // Fix bug 1: pisahkan timer animasi attack agar tidak berganti tiap frame
+    private int attackAnimTick = 0;
+    private boolean attackAnimFrame = false; // false=frame1, true=frame2
 
     public Soldier(float x, float y, int tier) {
         super(x, y, 40 + tier * 10, 8 + tier * 2, 1, 2);
@@ -19,20 +21,34 @@ public class Soldier extends Entity {
 
     @Override
     public void update(float playerX, float playerY, int mapW, int mapH) {
-        float soldierSpeed = 1f;
+        float soldierSpeed = 1.5f; // Fix bug 4: naikkan speed agar lebih responsif
 
-        // Arah hadap dengan threshold agar tidak bergetar
-        if (this.x > playerX + 20) facingLeft = true;
-        else if (this.x < playerX - 20) facingLeft = false;
-
-        if (this.x > playerX + 15) {
+        // Fix: arah hadap zombie ke arah player (sebelumnya terbalik)
+        if (this.x > playerX + 5) {
+            facingLeft = false; // player di kiri, zombie hadap kiri = false (hadap kanan default)
             this.x -= soldierSpeed;
-        } else if (this.x < playerX - 15) {
+        } else if (this.x < playerX - 5) {
+            facingLeft = true;  // player di kanan, zombie hadap kanan
             this.x += soldierSpeed;
+        }
+
+        // Fix bug 1: animasi attack berganti tiap 8 tick, bukan tiap frame
+        if (attackCooldown < 30 && attackCooldown > 0) {
+            attackAnimTick++;
+            if (attackAnimTick >= 8) {
+                attackAnimFrame = !attackAnimFrame;
+                attackAnimTick = 0;
+            }
+        } else {
+            attackAnimTick = 0;
+            attackAnimFrame = false;
         }
 
         if (attackCooldown > 0) attackCooldown--;
         animTick++;
+
+        // Fix bug 2: kunci Y di groundY yang konsisten
+        this.y = 460f;
     }
 
     public boolean canAttack(float px, float py) {
@@ -57,14 +73,14 @@ public class Soldier extends Entity {
         p.setColor(new Color(0, 0, 0, 60));
         p.fillOval(cx - 14, cy + 12, 28, 10);
 
-        // Pilih sprite sesuai kondisi
+        // Pilih sprite - Fix bug 1: pakai attackAnimFrame bukan attackCooldown % 2
         BufferedImage sprite;
         if (!isAlive()) {
             sprite = anara.utils.AssetManager.soldierMati;
         } else if (attackCooldown < 30 && attackCooldown > 0) {
-            sprite = (attackCooldown % 2 == 0)
-                    ? anara.utils.AssetManager.soldierAttack1
-                    : anara.utils.AssetManager.soldierAttack2;
+            sprite = attackAnimFrame
+                    ? anara.utils.AssetManager.soldierAttack2
+                    : anara.utils.AssetManager.soldierAttack1;
         } else {
             sprite = (animTick / 15 % 2 == 0)
                     ? anara.utils.AssetManager.soldierJalan1
@@ -73,14 +89,11 @@ public class Soldier extends Entity {
 
         // Gambar sprite
         if (sprite != null) {
-            int spriteW = 72;
-            int spriteH = 72;
+            int spriteW = 72, spriteH = 72;
             int drawX = cx - spriteW / 2;
             int drawY = cy - spriteH + 20;
-
             Graphics2D sg = (Graphics2D) p.create();
             if (facingLeft && isAlive()) {
-                // Flip horizontal pakai translate+scale (ukuran tetap sama)
                 sg.translate(drawX + spriteW, drawY);
                 sg.scale(-1, 1);
                 sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);

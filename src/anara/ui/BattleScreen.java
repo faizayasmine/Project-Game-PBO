@@ -103,6 +103,16 @@ public class BattleScreen extends BasePanel {
         // Kita tambah 130f agar posisinya turun menjadi 420 lebih rendah ke tanah
         player = new Player(MAP_W / 2f, 460f);
         player.setMainPlayer(true);
+        
+        // Set platform sesuai map
+if (mapId == 2) {
+    // {x_start, x_end, y} — posisi batu kiri dan kanan
+    
+    player.setPlatforms(new int[][]{
+        {30,  190, 350},  // batu kiri
+        {710, 870, 310}   // batu kanan
+    });
+}
 
         player.setExternalBonuses(
                 pd.getTotalAttackBonus()
@@ -150,7 +160,7 @@ public class BattleScreen extends BasePanel {
     }
 
     private void spawnSoldiers(int count, int tier) {
-int groundY = 460;
+        int groundY = 460;
 
         for (int i = 0; i < count; i++) {
             int jarakSpawn = 250; // Sedikit diperpendek agar cepat masuk layar
@@ -230,33 +240,31 @@ int groundY = 460;
         }
         if (mapId == 1 && remainingSoldiersToSpawn == 0 && soldiers.stream().noneMatch(s -> s.isAlive()) && !miniBossSpawned) {
             miniBosses.clear();
-           miniBosses.add(new MiniBoss((int) (player.getX() + 300), 460));
+            miniBosses.add(new MiniBoss((int) (player.getX() + 300), 460));
             miniBossSpawned = true;
             showNotif("PERINGATAN: MINI BOSS TELAH MUNCUL!", 180);
         }
 
-    if (mapId == 3) {
-    player.update(mousePos.x + cameraX, mousePos.y, WORLD_W, MAP_H);
-
-    spawnCooldown--;
-    cameraX = (int) (player.getX() - MAP_W / 2);
-    cameraX = Math.max(0, Math.min(cameraX, WORLD_W - MAP_W));
-
-    // Spawn soldier biasa selama belum di ujung
-    if (!miniBossSpawned && spawnCooldown <= 0) {
-        float x = player.getX() + 300;
-        if (x < WORLD_W - 600) {
-            soldiers.add(new Soldier((int) x, 460, 2));
+        if (mapId == 3) {
+            player.update(mousePos.x + cameraX, mousePos.y, WORLD_W, MAP_H);
+            spawnCooldown--;
+            cameraX = (int) (player.getX() - MAP_W / 2);
+            cameraX = Math.max(0, Math.min(cameraX, WORLD_W - MAP_W));
+            if (!miniBossSpawned && spawnCooldown <= 0) {
+                float x = player.getX() + 300;
+                if (x < WORLD_W - 600) {
+                    soldiers.add(new Soldier((int) x, 460, 2));
+                }
+                spawnCooldown = 120;
+            }
+            if (!miniBossSpawned && player.getX() >= WORLD_W - 600) {
+                soldiers.clear();
+                spawnMiniBosses(2);
+            }
+        } else {
+            // Tambahkan ini! Panggil update untuk map 1, 2, 4
+            player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
         }
-        spawnCooldown = 120;
-    }
-
-    // ← Spawn mini boss kalau player sudah dekat ujung
-    if (!miniBossSpawned && player.getX() >= WORLD_W - 600) {
-        soldiers.clear(); // bersihkan soldier biasa dulu
-        spawnMiniBosses(2);
-    }
-}
         player.updateJump();
 
         // MAP 4 PHASE SYSTEM
@@ -269,8 +277,8 @@ int groundY = 460;
             if (finalBoss != null && finalBoss.isAlive()) {
                 bossSpawnCooldown--;
                 if (bossSpawnCooldown <= 0) {
-                   
-int spawnAtGroundY = 460;
+
+                    int spawnAtGroundY = 460;
                     soldiers.add(new Soldier(
                             (int) (finalBoss.getX() + new Random().nextInt(200) - 100),
                             spawnAtGroundY,
@@ -402,11 +410,10 @@ int spawnAtGroundY = 460;
 
             case 3:
 
-             
-    if (miniBossSpawned && miniBosses.stream().noneMatch(mb -> mb.isAlive())) {
-        endBattle(true); // ← langsung menang tanpa perlu ke ujung
-    }
-    break;
+                if (miniBossSpawned && miniBosses.stream().noneMatch(mb -> mb.isAlive())) {
+                    endBattle(true); // ← langsung menang tanpa perlu ke ujung
+                }
+                break;
 
             case 4:
                 if (finalBossAppeared && finalBoss != null && !finalBoss.isAlive()) {
@@ -540,6 +547,22 @@ int spawnAtGroundY = 460;
                 finalBoss.draw(world);
             }
             player.draw(world);
+            // Foreground layer (digambar SETELAH player agar terlihat di depan)
+            if (mapId == 2 && anara.utils.AssetManager.map2Foreground != null) {
+                int bW = 180, bH = 120;
+                // Batu kiri bawah
+                world.drawImage(anara.utils.AssetManager.map2Foreground,
+                        -20, MAP_H - 200, bW, bH, null);
+                // Batu kanan bawah
+                world.drawImage(anara.utils.AssetManager.map2Foreground,
+                        MAP_W - 160, MAP_H - 200, bW, bH, null);
+                // Batu kiri atas (platform)
+                world.drawImage(anara.utils.AssetManager.map2Foreground,
+                        -20, MAP_H - 380, bW, bH, null);
+                // Batu kanan atas (platform)
+                world.drawImage(anara.utils.AssetManager.map2Foreground,
+                        MAP_W - 160, MAP_H - 380, bW, bH, null);
+            }
         }
 
         world.dispose();
@@ -564,56 +587,69 @@ int spawnAtGroundY = 460;
         g2.dispose();
     }
 
-  
-        private void drawBattleBackground(Graphics2D g2) {
-    int currentWidth = (mapId == 3) ? WORLD_W : MAP_W;
+    private void drawBattleBackground(Graphics2D g2) {
+        int currentWidth = (mapId == 3) ? WORLD_W : MAP_W;
 
-    if (mapId == 1 && anara.utils.AssetManager.map1Background != null) {
-        g2.drawImage(anara.utils.AssetManager.map1Background,
-                0, 0, currentWidth, MAP_H, null);
+        if (mapId == 1 && anara.utils.AssetManager.map1Background != null) {
+            g2.drawImage(anara.utils.AssetManager.map1Background,
+                    0, 0, currentWidth, MAP_H, null);
+        } else if (mapId == 2 && anara.utils.AssetManager.map2Background != null) {
+            g2.drawImage(anara.utils.AssetManager.map2Background,
+                    0, 0, MAP_W, MAP_H, null);
+        } else if (mapId == 3 && anara.utils.AssetManager.map3Background != null) {
+            int imgW = anara.utils.AssetManager.map3Background.getWidth();
+            for (int x = 0; x < WORLD_W; x += imgW) {
+                g2.drawImage(anara.utils.AssetManager.map3Background,
+                        x, 0, imgW, MAP_H, null);
+            }
 
-    } else if (mapId == 3 && anara.utils.AssetManager.map3Background != null) {
-        int imgW = anara.utils.AssetManager.map3Background.getWidth();
-        for (int x = 0; x < WORLD_W; x += imgW) {
-            g2.drawImage(anara.utils.AssetManager.map3Background,
-                    x, 0, imgW, MAP_H, null);
+        } else if (mapId == 4 && anara.utils.AssetManager.map4Background != null) { // ← tambah ini
+            g2.drawImage(anara.utils.AssetManager.map4Background,
+                    0, 0, currentWidth, MAP_H, null);
+
+        } else {
+            // Fallback warna solid (map 2 masuk sini)
+            Color groundColor;
+            switch (mapId) {
+                case 1:
+                    groundColor = new Color(25, 35, 20);
+                    break;
+                case 2:
+                    groundColor = new Color(30, 20, 15);
+                    break; // ← map 2 fallback merah gelap
+                case 3:
+                    groundColor = new Color(20, 15, 30);
+                    break;
+                default:
+                    groundColor = new Color(15, 10, 20);
+                    break;
+            }
+            g2.setColor(groundColor);
+            g2.fillRect(0, 0, currentWidth, MAP_H);
+
+            g2.setColor(new Color(255, 255, 255, 10));
+            for (int x = 0; x < currentWidth; x += 60) {
+                g2.drawLine(x, 0, x, MAP_H);
+            }
+            for (int y = 0; y < MAP_H; y += 60) {
+                g2.drawLine(0, y, currentWidth, y);
+            }
         }
 
-    } else if (mapId == 4 && anara.utils.AssetManager.map4Background != null) { // ← tambah ini
-        g2.drawImage(anara.utils.AssetManager.map4Background,
-                0, 0, currentWidth, MAP_H, null);
+        // Border & map name tetap
+        g2.setColor(new Color(60, 50, 30));
+        g2.setStroke(new BasicStroke(4f));
+        g2.drawRect(2, 2, MAP_W - 4, MAP_H - 4);
+        g2.setColor(new Color(40, 32, 16));
+        g2.setStroke(new BasicStroke(2f));
+        g2.drawRect(8, 8, MAP_W - 16, MAP_H - 16);
 
-    } else {
-        // Fallback warna solid (map 2 masuk sini)
-        Color groundColor;
-        switch (mapId) {
-            case 1:  groundColor = new Color(25, 35, 20); break;
-            case 2:  groundColor = new Color(30, 20, 15); break; // ← map 2 fallback merah gelap
-            case 3:  groundColor = new Color(20, 15, 30); break;
-            default: groundColor = new Color(15, 10, 20); break;
-        }
-        g2.setColor(groundColor);
-        g2.fillRect(0, 0, currentWidth, MAP_H);
-
-        g2.setColor(new Color(255, 255, 255, 10));
-        for (int x = 0; x < currentWidth; x += 60) g2.drawLine(x, 0, x, MAP_H);
-        for (int y = 0; y < MAP_H; y += 60) g2.drawLine(0, y, currentWidth, y);
+        g2.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 13));
+        g2.setColor(new Color(100, 80, 40, 140));
+        String[] mapNames = {"", "MAP I — PASUKAN PENJAGA", "MAP II — BERTAHAN HIDUP",
+            "MAP III — DUA MINI BOSS", "MAP IV — FINAL BOSS"};
+        g2.drawString(mapNames[mapId], 20, MAP_H - 12);
     }
-
-    // Border & map name tetap
-    g2.setColor(new Color(60, 50, 30));
-    g2.setStroke(new BasicStroke(4f));
-    g2.drawRect(2, 2, MAP_W - 4, MAP_H - 4);
-    g2.setColor(new Color(40, 32, 16));
-    g2.setStroke(new BasicStroke(2f));
-    g2.drawRect(8, 8, MAP_W - 16, MAP_H - 16);
-
-    g2.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 13));
-    g2.setColor(new Color(100, 80, 40, 140));
-    String[] mapNames = {"", "MAP I — PASUKAN PENJAGA", "MAP II — BERTAHAN HIDUP",
-                         "MAP III — DUA MINI BOSS", "MAP IV — FINAL BOSS"};
-    g2.drawString(mapNames[mapId], 20, MAP_H - 12);
-}
 
     private void drawHUD(Graphics2D g2) {
         // Kunci tinggi area HUD hitam
@@ -851,7 +887,7 @@ int spawnAtGroundY = 460;
         for (GameEntity e : activeEnemies) {
             // Mengunci posisi Y musuh agar selalu menapak tanah kaku,
             // tetapi membebaskan posisi X agar musuh bisa menumpuk masuk ke tubuh Player tanpa mendorongnya.
-           float groundY = 460f;
+            float groundY = 460f;
             e.setY(groundY);
         }
 

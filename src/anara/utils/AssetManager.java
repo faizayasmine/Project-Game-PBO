@@ -28,7 +28,8 @@ public class AssetManager {
     public static BufferedImage senjata1, senjata2, senjata3, senjata4;
     public static BufferedImage skil1, skil2, skil3;
     public static BufferedImage map4Background;
-    
+    public static BufferedImage map2Background;
+public static BufferedImage map2Foreground; // batu
 
     public static void loadAssets() {
         playerBasic = load("/assets/images/playerbasic.png");
@@ -57,6 +58,8 @@ public class AssetManager {
         skil2 = load("/assets/images/skil2.png");
         skil3 = load("/assets/images/skil3.png");
         map4Background = load("/assets/images/map4.png");
+        map2Background = load("/assets/images/map2.png");
+map2Foreground = load("/assets/images/batu.png");
     }
 
     private static BufferedImage load(String path) {

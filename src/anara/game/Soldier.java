@@ -19,7 +19,7 @@ public class Soldier extends Entity {
 
     @Override
     public void update(float playerX, float playerY, int mapW, int mapH) {
-        float soldierSpeed = 1.8f;
+        float soldierSpeed = 1f;
 
         // Arah hadap dengan threshold agar tidak bergetar
         if (this.x > playerX + 20) facingLeft = true;

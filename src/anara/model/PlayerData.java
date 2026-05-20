@@ -4,9 +4,11 @@ import java.io.*;
 import java.util.*;
 
 public class PlayerData implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private String name;
+    private String password;
     private int gold;
     private List<ShopItem> inventory;
     private List<ShopItem> equippedItems;
@@ -19,19 +21,53 @@ public class PlayerData implements Serializable {
         this.diamond = 0;
         this.inventory = new ArrayList<>();
         this.equippedItems = new ArrayList<>();
-        this.mapProgress = new int[]{1, 1, 1, 1}; // all unlocked for prototype
+        this.mapProgress = new int[]{1, 1, 1, 1};
     }
 
     // --- Getters & Setters ---
-    public String getName() { return name; }
-    public int getGold() { return gold; }
-    public void setGold(int gold) { this.gold = gold; }
-    public int getDiamond() { return diamond; }
-public void setDiamond(int diamond) { this.diamond = diamond; }
-public void addDiamond(int amount) { this.diamond += amount; }
-    public List<ShopItem> getInventory() { return inventory; }
-    public List<ShopItem> getEquippedItems() { return equippedItems; }
-    public int[] getMapProgress() { return mapProgress; }
+    public String getName() {
+        return name;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public int getGold() {
+        return gold;
+    }
+
+    public void setGold(int gold) {
+        this.gold = gold;
+    }
+
+    public int getDiamond() {
+        return diamond;
+    }
+
+    public void setDiamond(int diamond) {
+        this.diamond = diamond;
+    }
+
+    public void addDiamond(int amount) {
+        this.diamond += amount;
+    }
+
+    public List<ShopItem> getInventory() {
+        return inventory;
+    }
+
+    public List<ShopItem> getEquippedItems() {
+        return equippedItems;
+    }
+
+    public int[] getMapProgress() {
+        return mapProgress;
+    }
 
     public void addItem(ShopItem item) {
         inventory.add(item);
@@ -56,14 +92,13 @@ public void addDiamond(int amount) { this.diamond += amount; }
 
     public int getTotalAttackBonus() {
         return equippedItems.stream()
-            .filter(i -> i.getType() == ShopItem.ItemType.WEAPON)
-            .mapToInt(ShopItem::getStatBonus).sum();
+                .filter(i -> i.getType() == ShopItem.ItemType.WEAPON)
+                .mapToInt(ShopItem::getStatBonus).sum();
     }
-  
 
     public int getTotalSkillBonus() {
         return equippedItems.stream()
-            .filter(i -> i.getType() == ShopItem.ItemType.SKILL)
-            .mapToInt(ShopItem::getStatBonus).sum();
+                .filter(i -> i.getType() == ShopItem.ItemType.SKILL)
+                .mapToInt(ShopItem::getStatBonus).sum();
     }
 }

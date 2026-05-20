@@ -16,7 +16,9 @@ public class MiniBoss extends Entity {
 
     @Override
     public void update(float playerX, float playerY, int mapW, int mapH) {
-        this.y = playerY;
+        // KUNCI UTAMA: Jangan pernah menyamakan this.y = playerY secara instan!
+        // Biarkan posisi Y Mini Boss konisten di tempat dia di-spawn (di tanah).
+        
         float miniBossSpeed = 2f;
         int attackRange = 45;
         float distanceX = Math.abs(this.x - playerX);
@@ -25,6 +27,7 @@ public class MiniBoss extends Entity {
         if (this.x > playerX + 10) facingLeft = true;
         else if (this.x < playerX - 10) facingLeft = false;
 
+        // Pergerakan horizontal (Hanya mengejar secara X)
         if (distanceX > attackRange) {
             if (this.x > playerX) {
                 this.x -= miniBossSpeed;
@@ -43,8 +46,12 @@ public class MiniBoss extends Entity {
     }
 
     public boolean canAttack(float px, float py) {
-        float dist = (float) Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2));
-        return dist < 65 && attackCooldown == 0;
+        // Pisahkan pengecekan jarak X dan jarak Y secara ketat
+        float distX = Math.abs(this.x - px);
+        float distY = Math.abs(this.y - py);
+        
+        // Hanya bisa menyerang jika jarak X dekat (bawah 45) DAN tinggi sejajar di tanah (bawah 30)
+        return distX < 45 && distY < 30 && attackCooldown == 0;
     }
 
     public int doAttack() {
@@ -56,8 +63,11 @@ public class MiniBoss extends Entity {
     public void draw(Graphics2D g2) {
         Graphics2D p = (Graphics2D) g2.create();
         int cx = (int) x, cy = (int) y;
+        
+        int spriteW = 96;
+        int spriteH = 96;
 
-        // Bayangan
+        // Bayangan tetap di bawah kaki
         p.setColor(new Color(0, 0, 0, 80));
         p.fillOval(cx - 24, cy + 20, 48, 14);
 
@@ -67,8 +77,6 @@ public class MiniBoss extends Entity {
                 : anara.utils.AssetManager.miniBossAttack2;
 
         if (sprite != null) {
-            int spriteW = 96;
-            int spriteH = 96;
             int drawX = cx - spriteW / 2;
             int drawY = cy - spriteH + 20;
 
@@ -90,19 +98,25 @@ public class MiniBoss extends Entity {
             p.fillOval(cx - 22, cy - 22, 44, 44);
         }
 
-        // HP bar
+        // ==========================================
+        // PERBAIKAN HUD: DIPINDAH KE ATAS KEPALA BOS
+        // ==========================================
+        // Menggunakan koordinat (cy - spriteH + 10) supaya posisinya berada di atas kepala karakter ksatria kamu
+        int hudY = cy - spriteH + 15; 
+
+        // 1. HP Bar (Atas Kepala)
         p.setColor(new Color(40, 10, 10));
-        p.fillRect(cx - 36, cy + 28, 72, 7);
+        p.fillRect(cx - 36, hudY, 72, 7);
         p.setColor(new Color(200, 40, 40));
-        p.fillRect(cx - 36, cy + 28, (int) (72 * getHpRatio()), 7);
+        p.fillRect(cx - 36, hudY, (int) (72 * getHpRatio()), 7);
         p.setColor(new Color(80, 20, 20));
         p.setStroke(new BasicStroke(1f));
-        p.drawRect(cx - 36, cy + 28, 72, 7);
+        p.drawRect(cx - 36, hudY, 72, 7);
 
-        // Label
-        p.setFont(new Font("Serif", Font.BOLD, 9));
-        p.setColor(new Color(220, 80, 80));
-        p.drawString("MINI BOSS", cx - 22, cy + 26);
+        // 2. Label "MINI BOSS" (Di atas HP Bar-nya lagi)
+        p.setFont(new Font("Serif", Font.BOLD, 10));
+        p.setColor(new Color(240, 50, 50));
+        p.drawString("MINI BOSS", cx - 24, hudY - 5);
 
         p.dispose();
     }

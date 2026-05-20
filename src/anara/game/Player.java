@@ -21,8 +21,8 @@ public class Player extends Entity {
     private boolean facingLeft = false; // ← arah hadap player
 
     private float velocityY = 0;
-    private final float gravity = 0.8f;
-    private final float jumpPower = -12f;
+    private final float gravity = 0.5f;
+    private final float jumpPower = -14f;
     private final int groundY = 420;
 
     public Player(float x, float y) {
@@ -36,21 +36,53 @@ public class Player extends Entity {
         if (!mainPlayer) return;
         if (onGround) {
             jumping = true;
-            onGround = false;
+            onGround = false;   // Biarkan gravitasi aktif kembali saat melompat
             velocityY = jumpPower;
         }
     }
 
     public void updateJump() {
         if (!mainPlayer) return;
-        if (jumping) {
+
+        // Terapkan gravitasi jika player tidak berada di tanah dasar
+        if (!onGround) {
             y += velocityY;
             velocityY += gravity;
-            if (y >= groundY) {
-                y = groundY;
+        }
+
+        // ===== LOGIKA LANDING DI PLATFORM MELAYANG =====
+        int platXStart = 200;  // Batas kiri platform
+        int platXEnd = 400;    // Batas kanan platform
+        int platY = 280;       // Tinggi platform
+
+        // Cek apakah posisi horizontal player ada di area platform
+        if (x >= platXStart && x <= platXEnd) {
+            // Player HANYA mendarat jika sedang bergerak JATUH KE BAWAH (velocityY > 0)
+            if (velocityY > 0 && y >= platY - 5 && y <= platY + 10) {
+                y = platY;
                 jumping = false;
                 onGround = true;
                 velocityY = 0;
+                return; // Keluar dari fungsi agar tidak lanjut mengecek tanah bawah
+            }
+        }
+
+        // ===== LOGIKA LANDING DI TANAH DASAR =====
+        if (y >= groundY) {
+            y = groundY;
+            jumping = false;
+            onGround = true;
+            velocityY = 0;
+        }
+
+        // ===== LOGIKA JATUH DARI PLATFORM =====
+        // Jika player sedang dianggap di atas tanah (onGround) tapi di ketinggian platform,
+        // dan posisinya berjalan keluar dari batas kiri/kanan platform, buat dia jatuh!
+        if (onGround && y == platY) {
+            if (x < platXStart || x > platXEnd) {
+                onGround = false;
+                jumping = true;
+                velocityY = 0; // Mulai jatuh bebas dengan gravitasi
             }
         }
     }

@@ -5,6 +5,7 @@ import java.io.*;
 import java.util.*;
 
 public class SaveManager {
+
     private static final String SAVE_DIR = "saves/";
     private static final String REGISTRY_FILE = SAVE_DIR + "players.dat";
 
@@ -24,7 +25,9 @@ public class SaveManager {
 
     public static PlayerData loadPlayer(String name) {
         File f = new File(SAVE_DIR + name + ".sav");
-        if (!f.exists()) return null;
+        if (!f.exists()) {
+            return null;
+        }
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
             return (PlayerData) ois.readObject();
         } catch (Exception e) {
@@ -54,5 +57,16 @@ public class SaveManager {
 
     public static void deletePlayer(String name) {
         new File(SAVE_DIR + name + ".sav").delete();
+    }
+
+    public static boolean verifyPassword(String username, String password) {
+        PlayerData player = loadPlayer(username);
+
+        if (player == null) {
+            return false;
+        }
+
+        return player.getPassword() != null
+                && player.getPassword().equals(password);
     }
 }

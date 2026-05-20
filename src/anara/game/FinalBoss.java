@@ -1,16 +1,16 @@
 package anara.game;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class FinalBoss extends Entity {
 
     private int attackCooldown = 60;
     private float animPhase = 0;
-    private int phase = 1; // 1 = normal, 2 = enraged at 50% HP
+    private int phase = 1;
     private int specialCooldown = 180;
+    private int animTick = 0;
+    private boolean facingLeft = false;
 
     public FinalBoss(float x, float y) {
         super(x, y, 1000, 45, 8, 1);
@@ -19,43 +19,32 @@ public class FinalBoss extends Entity {
     @Override
     public void update(float targetX, float targetY, int mapW, int mapH) {
         animPhase += 0.05f;
+        animTick++;
 
-        // Phase 2 aktif saat HP < 50%: boss bergerak & menyerang lebih kencang
         if (getHpRatio() < 0.5f && phase == 1) {
             phase = 2;
             attack = 50;
         }
 
-        // BUG FIX #5: Blok isEnraged() di bawah ini sebelumnya ada dan
-        // meng-override attack dari 50 kembali ke 30 saat HP < 30%,
-        // sehingga boss justru LEBIH LEMAH di fase kritis. Blok itu dihapus.
-        // isEnraged() (HP < 30%) sekarang hanya dipakai untuk efek visual
-        // dan label "MENGAMUK!" di draw(), bukan untuk mengubah stats.
-
         float dx = targetX - x, dy = targetY - y;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-        // Speed pergerakan meningkat di phase 2; lebih cepat lagi saat enraged
+        // Arah hadap
+        if (targetX < this.x - 20) facingLeft = true;
+        else if (targetX > this.x + 20) facingLeft = false;
+
         float spd;
-        if (isEnraged()) {
-            spd = 3.5f;  // HP < 30%: paling cepat
-        } else if (phase == 2) {
-            spd = 2.5f;  // HP 30-50%: cepat
-        } else {
-            spd = 1.5f;  // HP > 50%: normal
-        }
+        if (isEnraged()) spd = 3.5f;
+        else if (phase == 2) spd = 2.5f;
+        else spd = 1.5f;
 
         this.x += (dx / dist) * spd;
         this.y += (dy / dist) * spd;
         this.x = Math.max(50, Math.min(mapW - 50, this.x));
         this.y = Math.max(50, Math.min(mapH - 50, this.y));
 
-        if (attackCooldown > 0) {
-            attackCooldown--;
-        }
-        if (specialCooldown > 0) {
-            specialCooldown--;
-        }
+        if (attackCooldown > 0) attackCooldown--;
+        if (specialCooldown > 0) specialCooldown--;
     }
 
     public boolean canAttack(float px, float py) {
@@ -63,9 +52,7 @@ public class FinalBoss extends Entity {
         return dist < 50 && attackCooldown == 0;
     }
 
-    public boolean canSpecial() {
-        return specialCooldown == 0;
-    }
+    public boolean canSpecial() { return specialCooldown == 0; }
 
     public int doAttack() {
         attackCooldown = 70;
@@ -77,139 +64,59 @@ public class FinalBoss extends Entity {
         return attack * 2;
     }
 
-    // isEnraged: HP < 30% — digunakan untuk efek visual dan kecepatan
-    public boolean isEnraged() {
-        return hp < maxHp * 0.3f;
-    }
+    public boolean isEnraged() { return hp < maxHp * 0.3f; }
 
     @Override
     public void draw(Graphics2D g2) {
-         Graphics2D p = (Graphics2D) g2.create();
+        Graphics2D p = (Graphics2D) g2.create();
+        int cx = (int) x, cy = (int) y;
+        boolean enraged = isEnraged();
 
-    int cx = (int) x, cy = (int) y;
+        // Bayangan
+        p.setColor(new Color(0, 0, 0, 100));
+        p.fillOval(cx - 36, cy + 30, 72, 18);
 
-    float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
+        // Aura efek tetap ditampilkan di belakang sprite
+        float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
+        Color auraColor = enraged
+                ? new Color(200, 50, 200, (int) (glow * 80))
+                : new Color(80, 50, 180, (int) (glow * 60));
+        p.setColor(auraColor);
+        p.fillOval(cx - 60, cy - 60, 120, 120);
 
-    boolean enraged = isEnraged();
+        // Pilih sprite: basic saat normal, attack saat enraged/phase2
+        BufferedImage sprite = (enraged || attackCooldown < 40)
+                ? anara.utils.AssetManager.finalBossAttack1
+                : anara.utils.AssetManager.finalBossBasic;
 
-    // Outer aura
-    Color auraColor = enraged
-            ? new Color(200, 50, 200, (int) (glow * 60))
-            : new Color(50, 50, 180, (int) (glow * 50));
+        if (sprite != null) {
+            int spriteW = 120;
+            int spriteH = 120;
+            int drawX = cx - spriteW / 2;
+            int drawY = cy - spriteH + 20;
 
-    p.setColor(auraColor);
-    p.fillOval(cx - 55, cy - 55, 110, 110);
+            Graphics2D sg = (Graphics2D) p.create();
+            if (facingLeft) {
+                sg.translate(drawX + spriteW, drawY);
+                sg.scale(-1, 1);
+                sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
+            } else {
+                sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
+            }
+            sg.dispose();
+        } else {
+            // Fallback shape
+            p.setColor(enraged ? new Color(100, 20, 100) : new Color(20, 20, 80));
+            p.fillOval(cx - 38, cy - 38, 76, 76);
+        }
 
-    // Body
-    Color bodyCol = enraged
-            ? new Color(100, 20, 100)
-            : new Color(20, 20, 80);
+        // Enraged text
+        if (enraged) {
+            p.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 12));
+            p.setColor(new Color(255, 100, 255));
+            p.drawString("MENGAMUK!", cx - 30, cy - 65);
+        }
 
-    p.setColor(bodyCol);
-    p.fillOval(cx - 38, cy - 38, 76, 76);
-
-    p.setColor(
-            enraged
-                    ? new Color(140, 40, 140)
-                    : new Color(40, 40, 120)
-    );
-
-    p.fillOval(cx - 24, cy - 28, 48, 35);
-
-    // Crown / spikes
-    p.setColor(
-            enraged
-                    ? new Color(180, 60, 0)
-                    : new Color(100, 90, 50)
-    );
-
-    p.setStroke(new BasicStroke(
-            5f,
-            BasicStroke.CAP_ROUND,
-            BasicStroke.JOIN_ROUND
-    ));
-
-    for (int i = -2; i <= 2; i++) {
-
-        int sx = cx + i * 12;
-
-        p.drawLine(
-                sx,
-                cy - 38,
-                sx + i * 3,
-                cy - 55 - Math.abs(i) * 5
-        );
+        p.dispose();
     }
-
-    // Eyes
-    Color eyeCol = enraged
-            ? new Color(255, 0, 255)
-            : new Color(100, 100, 255);
-
-    p.setColor(eyeCol);
-
-    p.fillOval(cx - 14, cy - 24, 10, 10);
-    p.fillOval(cx + 4, cy - 24, 10, 10);
-
-    p.setColor(Color.WHITE);
-
-    p.fillOval(cx - 11, cy - 21, 4, 4);
-    p.fillOval(cx + 7, cy - 21, 4, 4);
-
-    // Weapon
-    p.setColor(new Color(80, 80, 100));
-
-    p.setStroke(new BasicStroke(
-            4f,
-            BasicStroke.CAP_ROUND,
-            BasicStroke.JOIN_ROUND
-    ));
-
-    double wAngle = animPhase;
-
-    int wx1 = cx + (int) (Math.cos(wAngle) * 30);
-    int wy1 = cy + (int) (Math.sin(wAngle) * 30);
-
-    int wx2 = cx + (int) (Math.cos(wAngle) * 60);
-    int wy2 = cy + (int) (Math.sin(wAngle) * 60);
-
-    p.drawLine(wx1, wy1, wx2, wy2);
-
-    p.setColor(new Color(160, 160, 190));
-
-    p.setStroke(new BasicStroke(
-            3f,
-            BasicStroke.CAP_ROUND,
-            BasicStroke.JOIN_ROUND
-    ));
-
-    p.drawArc(
-            wx2 - 18,
-            wy2 - 18,
-            36,
-            36,
-            (int) Math.toDegrees(wAngle),
-            120
-    );
-
-    // Enraged text
-    if (enraged) {
-
-        p.setFont(new Font(
-                "Serif",
-                Font.BOLD | Font.ITALIC,
-                10
-        ));
-
-        p.setColor(new Color(255, 100, 255));
-
-        p.drawString(
-                "MENGAMUK!",
-                cx - 26,
-                cy - 60
-        );
-    }
-
-    p.dispose();
-}
 }

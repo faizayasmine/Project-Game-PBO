@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GameEngine {
+
     private static GameEngine instance;
     private JFrame mainFrame;
     private CardLayout cardLayout;
@@ -16,21 +17,23 @@ public class GameEngine {
     private SoundManager soundManager;
 
     // Screen name constants
-    public static final String SCREEN_LOGIN     = "LOGIN";
+    public static final String SCREEN_LOGIN = "LOGIN";
     public static final String SCREEN_MAIN_MENU = "MAIN_MENU";
     public static final String SCREEN_MAP_SELECT = "MAP_SELECT";
-    public static final String SCREEN_LOADING   = "LOADING";
-    public static final String SCREEN_BATTLE    = "BATTLE";
-    public static final String SCREEN_SHOP      = "SHOP";
+    public static final String SCREEN_LOADING = "LOADING";
+    public static final String SCREEN_BATTLE = "BATTLE";
+    public static final String SCREEN_SHOP = "SHOP";
     public static final String SCREEN_PLAYER_DATA = "PLAYER_DATA";
-    public static final String SCREEN_SETTING   = "SETTING";
+    public static final String SCREEN_SETTING = "SETTING";
 
     private GameEngine() {
         soundManager = SoundManager.getInstance();
     }
 
     public static GameEngine getInstance() {
-        if (instance == null) instance = new GameEngine();
+        if (instance == null) {
+            instance = new GameEngine();
+        }
         return instance;
     }
 
@@ -45,8 +48,8 @@ public class GameEngine {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         mainPanel.setBackground(Color.BLACK);
-        
-         AssetManager.loadAssets();
+
+        AssetManager.loadAssets();
 
         // Register all screens
         mainPanel.add(new LoginScreen(), SCREEN_LOGIN);
@@ -90,31 +93,53 @@ public class GameEngine {
     }
 
     public void showScreen(String screenName) {
-        // Re-add updated screens before showing
-        if (screenName.equals(SCREEN_MAIN_MENU)) {
-            mainPanel.remove(getScreenComponent(SCREEN_MAIN_MENU));
-            mainPanel.add(new MainMenuScreen(), SCREEN_MAIN_MENU);
-        }
-        if (screenName.equals(SCREEN_PLAYER_DATA)) {
-            mainPanel.remove(getScreenComponent(SCREEN_PLAYER_DATA));
-            mainPanel.add(new PlayerDataScreen(), SCREEN_PLAYER_DATA);
-        }
-        cardLayout.show(mainPanel, screenName);
-        mainPanel.revalidate();
-        mainPanel.repaint();
+    if (screenName.equals(SCREEN_MAIN_MENU)) {
+        Component old = getScreenComponent(SCREEN_MAIN_MENU);
+        if (old != null) mainPanel.remove(old);
+        mainPanel.add(new MainMenuScreen(), SCREEN_MAIN_MENU);
     }
-
-    private Component getScreenComponent(String name) {
-        for (Component c : mainPanel.getComponents()) {
-            String n = mainPanel.getLayout() instanceof CardLayout ? name : "";
-            // just return by iterating
-        }
-        // Fallback - create a placeholder; screens re-added dynamically
-        return new JPanel();
+    if (screenName.equals(SCREEN_PLAYER_DATA)) {
+        Component old = getScreenComponent(SCREEN_PLAYER_DATA);
+        if (old != null) mainPanel.remove(old);
+        mainPanel.add(new PlayerDataScreen(), SCREEN_PLAYER_DATA);
     }
+    if (screenName.equals(SCREEN_SHOP)) {
+        Component old = getScreenComponent(SCREEN_SHOP);
+        if (old != null) mainPanel.remove(old);
+        mainPanel.add(new ShopScreen(), SCREEN_SHOP);
+    }
+    cardLayout.show(mainPanel, screenName);
+    mainPanel.revalidate();
+    mainPanel.repaint();
+}
+//    public void showScreen(String screenName) {
+//        // Re-add updated screens before showing
+//        if (screenName.equals(SCREEN_MAIN_MENU)) {
+//            mainPanel.remove(getScreenComponent(SCREEN_MAIN_MENU));
+//            mainPanel.add(new MainMenuScreen(), SCREEN_MAIN_MENU);
+//        }
+//        if (screenName.equals(SCREEN_PLAYER_DATA)) {
+//            mainPanel.remove(getScreenComponent(SCREEN_PLAYER_DATA));
+//            mainPanel.add(new PlayerDataScreen(), SCREEN_PLAYER_DATA);
+//        }
+//        cardLayout.show(mainPanel, screenName);
+//        mainPanel.revalidate();
+//        mainPanel.repaint();
+//    }
 
+//    private Component getScreenComponent(String name) {
+//        for (Component c : mainPanel.getComponents()) {
+//            String n = mainPanel.getLayout() instanceof CardLayout ? name : "";
+//            // just return by iterating
+//        }
+//        // Fallback - create a placeholder; screens re-added dynamically
+//        return new JPanel();
+//    }
     public void showBattle(int mapId) {
-        mainPanel.remove(getScreen(SCREEN_BATTLE));
+        Component oldBattle = getScreenComponent(SCREEN_BATTLE);
+        if (oldBattle != null) {
+            mainPanel.remove(oldBattle);
+        }
         BattleScreen battle = new BattleScreen();
         battle.setMapId(mapId);
         mainPanel.add(battle, SCREEN_BATTLE);
@@ -128,15 +153,28 @@ public class GameEngine {
         t.start();
     }
 
-    private Component getScreen(String name) {
+    private Component getScreenComponent(String name) {
         for (Component c : mainPanel.getComponents()) {
-            if (c.getName() != null && c.getName().equals(name)) return c;
+            if (name.equals(c.getName())) {
+                return c;
+            }
         }
-        return new JPanel();
+        return null;
     }
 
-    public PlayerData getCurrentPlayer() { return currentPlayer; }
-    public void setCurrentPlayer(PlayerData p) { this.currentPlayer = p; }
-    public SoundManager getSoundManager() { return soundManager; }
-    public JFrame getMainFrame() { return mainFrame; }
+    public PlayerData getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public void setCurrentPlayer(PlayerData p) {
+        this.currentPlayer = p;
+    }
+
+    public SoundManager getSoundManager() {
+        return soundManager;
+    }
+
+    public JFrame getMainFrame() {
+        return mainFrame;
+    }
 }

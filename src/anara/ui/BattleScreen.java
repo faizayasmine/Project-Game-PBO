@@ -101,8 +101,7 @@ public class BattleScreen extends BasePanel {
 
         // MAP_H itu 580. Kalau dibagi 2 = 290 (tengah). 
         // Kita tambah 130f agar posisinya turun menjadi 420 lebih rendah ke tanah
-        player = new Player(MAP_W / 2f, (MAP_H / 2f) + 130f);
-
+        player = new Player(MAP_W / 2f, 460f);
         player.setMainPlayer(true);
 
         player.setExternalBonuses(
@@ -151,7 +150,7 @@ public class BattleScreen extends BasePanel {
     }
 
     private void spawnSoldiers(int count, int tier) {
-        int groundY = (int) ((MAP_H / 2) + 130);
+int groundY = 460;
 
         for (int i = 0; i < count; i++) {
             int jarakSpawn = 250; // Sedikit diperpendek agar cepat masuk layar
@@ -175,13 +174,13 @@ public class BattleScreen extends BasePanel {
         if (finishArea != null) {
             baseX = finishArea.x - 200;
             // Map 3: kunci di posisi bawah
-            baseY0 = (MAP_H / 2f) + 130f;
-            baseY1 = (MAP_H / 2f) + 130f;
+            baseY0 = 460f;
+            baseY1 = 460f;
         } else {
             baseX = MAP_W * 0.65f;
             // Map 1 & 2: kunci di posisi bawah
-            baseY0 = (MAP_H / 2f) + 130f;
-            baseY1 = (MAP_H / 2f) + 130f;
+            baseY0 = 460f;
+            baseY1 = 460f;
         }
 
         float[] xs = {baseX, baseX + 120};
@@ -236,26 +235,28 @@ public class BattleScreen extends BasePanel {
             showNotif("PERINGATAN: MINI BOSS TELAH MUNCUL!", 180);
         }
 
-        // UPDATE PLAYER & KAMERA ( FIX KOORDINAT MOUSE MAP 3 )
-        if (mapId == 3) {
-            // Ditambah cameraX agar arah hadap player sinkron dengan posisi world
-            player.update(mousePos.x + cameraX, mousePos.y, WORLD_W, MAP_H);
+    if (mapId == 3) {
+    player.update(mousePos.x + cameraX, mousePos.y, WORLD_W, MAP_H);
 
-            spawnCooldown--;
-            cameraX = (int) (player.getX() - MAP_W / 2);
-            cameraX = Math.max(0, Math.min(cameraX, WORLD_W - MAP_W));
+    spawnCooldown--;
+    cameraX = (int) (player.getX() - MAP_W / 2);
+    cameraX = Math.max(0, Math.min(cameraX, WORLD_W - MAP_W));
 
-            if (spawnCooldown <= 0) {
-                float x = player.getX() + 300;
-                if (x < WORLD_W - 150) {
-                    soldiers.add(new Soldier((int) x, (int) ((MAP_H / 2) + 130), 2));
-                }
-                spawnCooldown = 120;
-            }
-        } else {
-            player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
+    // Spawn soldier biasa selama belum di ujung
+    if (!miniBossSpawned && spawnCooldown <= 0) {
+        float x = player.getX() + 300;
+        if (x < WORLD_W - 600) {
+            soldiers.add(new Soldier((int) x, (int) ((MAP_H / 2) + 130), 2));
         }
+        spawnCooldown = 120;
+    }
 
+    // ← Spawn mini boss kalau player sudah dekat ujung
+    if (!miniBossSpawned && player.getX() >= WORLD_W - 600) {
+        soldiers.clear(); // bersihkan soldier biasa dulu
+        spawnMiniBosses(2);
+    }
+}
         player.updateJump();
 
         // MAP 4 PHASE SYSTEM
@@ -399,11 +400,12 @@ public class BattleScreen extends BasePanel {
                 break;
 
             case 3:
-                boolean miniBossDead = miniBosses.stream().noneMatch(mb -> mb.isAlive());
-                if (miniBossDead && player.getX() >= WORLD_W - 150) {
-                    endBattle(true);
-                }
-                break;
+
+             
+    if (miniBossSpawned && miniBosses.stream().noneMatch(mb -> mb.isAlive())) {
+        endBattle(true); // ← langsung menang tanpa perlu ke ujung
+    }
+    break;
 
             case 4:
                 if (finalBossAppeared && finalBoss != null && !finalBoss.isAlive()) {
@@ -539,15 +541,6 @@ public class BattleScreen extends BasePanel {
             player.draw(world);
         }
 
-        // finish area
-        if (mapId == 3 && !miniBossSpawned && finishArea != null) {
-
-            world.setColor(new Color(255, 215, 0, 120));
-            world.fillRect(finishArea.x, finishArea.y, finishArea.width, finishArea.height);
-            world.setColor(Color.YELLOW);
-            world.drawRect(finishArea.x, finishArea.y, finishArea.width, finishArea.height);
-        }
-
         world.dispose();
 
         // ===== UI LAYER =====
@@ -570,53 +563,56 @@ public class BattleScreen extends BasePanel {
         g2.dispose();
     }
 
-    private void drawBattleBackground(Graphics2D g2) {
-        int currentWidth = (mapId == 3) ? WORLD_W : MAP_W;
+  
+        private void drawBattleBackground(Graphics2D g2) {
+    int currentWidth = (mapId == 3) ? WORLD_W : MAP_W;
 
-        // Tilted dark ground
+    if (mapId == 1 && anara.utils.AssetManager.map1Background != null) {
+        g2.drawImage(anara.utils.AssetManager.map1Background,
+                0, 0, currentWidth, MAP_H, null);
+
+    } else if (mapId == 3 && anara.utils.AssetManager.map3Background != null) {
+        int imgW = anara.utils.AssetManager.map3Background.getWidth();
+        for (int x = 0; x < WORLD_W; x += imgW) {
+            g2.drawImage(anara.utils.AssetManager.map3Background,
+                    x, 0, imgW, MAP_H, null);
+        }
+
+    } else if (mapId == 4 && anara.utils.AssetManager.map4Background != null) { // ← tambah ini
+        g2.drawImage(anara.utils.AssetManager.map4Background,
+                0, 0, currentWidth, MAP_H, null);
+
+    } else {
+        // Fallback warna solid (map 2 masuk sini)
         Color groundColor;
         switch (mapId) {
-            case 1:
-                groundColor = new Color(25, 35, 20);
-                break;
-            case 2:
-                groundColor = new Color(30, 20, 15);
-                break;
-            case 3:
-                groundColor = new Color(20, 15, 30);
-                break;
-            default:
-                groundColor = new Color(15, 10, 20);
-                break;
+            case 1:  groundColor = new Color(25, 35, 20); break;
+            case 2:  groundColor = new Color(30, 20, 15); break; // ← map 2 fallback merah gelap
+            case 3:  groundColor = new Color(20, 15, 30); break;
+            default: groundColor = new Color(15, 10, 20); break;
         }
         g2.setColor(groundColor);
         g2.fillRect(0, 0, currentWidth, MAP_H);
 
-// Grid tiles
         g2.setColor(new Color(255, 255, 255, 10));
-
-        for (int x = 0; x < currentWidth; x += 60) {
-            g2.drawLine(x, 0, x, MAP_H);
-        }
-
-        for (int y = 0; y < MAP_H; y += 60) {
-            g2.drawLine(0, y, currentWidth, y);
-        }
-
-        // Border walls
-        g2.setColor(new Color(60, 50, 30));
-        g2.setStroke(new BasicStroke(4f));
-        g2.drawRect(2, 2, MAP_W - 4, MAP_H - 4);
-        g2.setColor(new Color(40, 32, 16));
-        g2.setStroke(new BasicStroke(2f));
-        g2.drawRect(8, 8, MAP_W - 16, MAP_H - 16);
-
-        // Map name badge
-        g2.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 13));
-        g2.setColor(new Color(100, 80, 40, 140));
-        String[] mapNames = {"", "MAP I — PASUKAN PENJAGA", "MAP II — BERTAHAN HIDUP", "MAP III — DUA MINI BOSS", "MAP IV — FINAL BOSS"};
-        g2.drawString(mapNames[mapId], 20, MAP_H - 12);
+        for (int x = 0; x < currentWidth; x += 60) g2.drawLine(x, 0, x, MAP_H);
+        for (int y = 0; y < MAP_H; y += 60) g2.drawLine(0, y, currentWidth, y);
     }
+
+    // Border & map name tetap
+    g2.setColor(new Color(60, 50, 30));
+    g2.setStroke(new BasicStroke(4f));
+    g2.drawRect(2, 2, MAP_W - 4, MAP_H - 4);
+    g2.setColor(new Color(40, 32, 16));
+    g2.setStroke(new BasicStroke(2f));
+    g2.drawRect(8, 8, MAP_W - 16, MAP_H - 16);
+
+    g2.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 13));
+    g2.setColor(new Color(100, 80, 40, 140));
+    String[] mapNames = {"", "MAP I — PASUKAN PENJAGA", "MAP II — BERTAHAN HIDUP",
+                         "MAP III — DUA MINI BOSS", "MAP IV — FINAL BOSS"};
+    g2.drawString(mapNames[mapId], 20, MAP_H - 12);
+}
 
     private void drawHUD(Graphics2D g2) {
         // Kunci tinggi area HUD hitam
@@ -854,7 +850,7 @@ public class BattleScreen extends BasePanel {
         for (GameEntity e : activeEnemies) {
             // Mengunci posisi Y musuh agar selalu menapak tanah kaku,
             // tetapi membebaskan posisi X agar musuh bisa menumpuk masuk ke tubuh Player tanpa mendorongnya.
-            float groundY = (MAP_H / 2f) + 130f;
+           float groundY = 460f;
             e.setY(groundY);
         }
 

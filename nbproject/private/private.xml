@@ -5,6 +5,8 @@
         <group>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/main/Main.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/ui/MainMenuScreen.java</file>
+            <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/ui/ShopScreen.java</file>
+            <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/ui/SettingScreen.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/game/MiniBoss.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/game/Player.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/nbproject/build-impl.xml</file>
@@ -20,6 +22,7 @@
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/core/GameEngine.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/ui/BattleScreen.java</file>
             <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/audio/SoundManager.java</file>
+            <file>file:/D:/aruna/Repository-1/GamePBO/src/anara/utils/SaveManager.java</file>
         </group>
     </open-files>
 </project-private>

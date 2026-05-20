@@ -10,11 +10,13 @@ public class PlayerData implements Serializable {
     private int gold;
     private List<ShopItem> inventory;
     private List<ShopItem> equippedItems;
-    private int[] mapProgress; // 0=locked, 1=unlocked, 2=completed
+    private int[] mapProgress;
+    private int diamond;
 
     public PlayerData(String name) {
         this.name = name;
         this.gold = 300;
+        this.diamond = 0;
         this.inventory = new ArrayList<>();
         this.equippedItems = new ArrayList<>();
         this.mapProgress = new int[]{1, 1, 1, 1}; // all unlocked for prototype
@@ -24,6 +26,9 @@ public class PlayerData implements Serializable {
     public String getName() { return name; }
     public int getGold() { return gold; }
     public void setGold(int gold) { this.gold = gold; }
+    public int getDiamond() { return diamond; }
+public void setDiamond(int diamond) { this.diamond = diamond; }
+public void addDiamond(int amount) { this.diamond += amount; }
     public List<ShopItem> getInventory() { return inventory; }
     public List<ShopItem> getEquippedItems() { return equippedItems; }
     public int[] getMapProgress() { return mapProgress; }

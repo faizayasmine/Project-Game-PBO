@@ -79,8 +79,8 @@ private Rectangle getBtnRect(int index) {
     private void handleMenuClick(int index) {
         switch (index) {
             case 0:
-                GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAP_SELECT);
-                break;
+             GameEngine.getInstance().showScreen(GameEngine.SCREEN_STORY);
+             break;
             case 1:
                 GameEngine.getInstance().showScreen(GameEngine.SCREEN_SHOP);
                 break;

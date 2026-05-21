@@ -11,48 +11,61 @@ public class FinalBoss extends Entity {
     private int specialCooldown = 180;
     private int animTick = 0;
     private boolean facingLeft = false;
+    private int specialVisualTimer = 0;
 
     public FinalBoss(float x, float y) {
         super(x, y, 1000, 45, 8, 1);
     }
 
-    @Override
-    public void update(float targetX, float targetY, int mapW, int mapH) {
-        animPhase += 0.05f;
-        animTick++;
+@Override
+public void update(float targetX, float targetY, int mapW, int mapH) {
+    animPhase += 0.05f;
+    animTick++;
 
-        if (getHpRatio() < 0.5f && phase == 1) {
-            phase = 2;
-            attack = 50;
-        }
+    if (getHpRatio() < 0.5f && phase == 1) {
+        phase = 2;
+        attack = 50;
+    }
+    if (specialVisualTimer > 0) specialVisualTimer--;
 
-        float dx = targetX - x, dy = targetY - y;
-        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+    // Hanya kejar X, Y dikunci di tanah
+    float dx = targetX - x;
+    float dist = Math.abs(dx);
 
-        // Arah hadap
-        if (targetX < this.x - 20) facingLeft = true;
-        else if (targetX > this.x + 20) facingLeft = false;
+    facingLeft = (targetX < this.x);
 
-        float spd;
-        if (isEnraged()) spd = 3.5f;
-        else if (phase == 2) spd = 2.5f;
-        else spd = 1.5f;
+    float spd;
+    if (isEnraged()) spd = 3.5f;
+    else if (phase == 2) spd = 2.5f;
+    else spd = 1.5f;
 
+    if (dist > 1f) {
         this.x += (dx / dist) * spd;
-        this.y += (dy / dist) * spd;
-        this.x = Math.max(50, Math.min(mapW - 50, this.x));
-        this.y = Math.max(50, Math.min(mapH - 50, this.y));
-
-        if (attackCooldown > 0) attackCooldown--;
-        if (specialCooldown > 0) specialCooldown--;
     }
 
-    public boolean canAttack(float px, float py) {
-        float dist = (float) Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2));
-        return dist < 50 && attackCooldown == 0;
-    }
+    // Kunci Y di tanah
+    this.y = 460f;
+    this.x = Math.max(50, Math.min(mapW - 50, this.x));
 
-    public boolean canSpecial() { return specialCooldown == 0; }
+    if (attackCooldown > 0) attackCooldown--;
+    if (specialCooldown > 0) specialCooldown--;
+}
+
+   public boolean canAttack(float px, float py) {
+    float distX = Math.abs(px - x);
+    return distX < 60 && attackCooldown == 0;
+}
+
+  // Hapus canSpecial() dan doSpecial() lama, ganti dengan:
+public boolean canMeleeAttack(float px, float py) {
+    float distX = Math.abs(px - x);
+    return distX < 60 && attackCooldown == 0;
+}
+
+public int doMeleeAttack() {
+    attackCooldown = 70;
+    return attack; // damage penuh
+}
 
     public int doAttack() {
         attackCooldown = 70;
@@ -65,6 +78,21 @@ public class FinalBoss extends Entity {
     }
 
     public boolean isEnraged() { return hp < maxHp * 0.3f; }
+    
+    public boolean canRangedAttack(float px, float py) {
+    float dist = (float) Math.sqrt(
+        Math.pow(px - x, 2) + Math.pow(py - y, 2)
+    );
+    // Jarak jauh: lebih dari 60px tapi kurang dari 350px
+    return dist >= 60 && dist < 350 && specialCooldown == 0;
+}
+
+public int doRangedAttack() {
+    specialCooldown = 200;
+    specialVisualTimer = 80;
+    // Damage kecil: hanya 30% dari attack normal
+    return (int)(attack * 0.3f);
+}
 
     @Override
     public void draw(Graphics2D g2) {
@@ -72,51 +100,46 @@ public class FinalBoss extends Entity {
         int cx = (int) x, cy = (int) y;
         boolean enraged = isEnraged();
 
-        // Bayangan
+        // Bayangan lebih besar
         p.setColor(new Color(0, 0, 0, 100));
-        p.fillOval(cx - 36, cy + 30, 72, 18);
+        p.fillOval(cx - 50, cy + 40, 100, 22);
 
-        // Aura efek tetap ditampilkan di belakang sprite
-        float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
-        Color auraColor = enraged
-                ? new Color(200, 50, 200, (int) (glow * 80))
-                : new Color(80, 50, 180, (int) (glow * 60));
-        p.setColor(auraColor);
-        p.fillOval(cx - 60, cy - 60, 120, 120);
+//        // Aura efek lebih besar
+//        float glow = (float) (0.5 + 0.5 * Math.sin(animPhase));
+//        Color auraColor = enraged
+//                ? new Color(200, 50, 200, (int) (glow * 80))
+//                : new Color(80, 50, 180, (int) (glow * 60));
+//        p.setColor(auraColor);
+//        p.fillOval(cx - 50, cy - 40, 100, 80);
 
-        // Pilih sprite: basic saat normal, attack saat enraged/phase2
+        // Sprite
         BufferedImage sprite = (enraged || attackCooldown < 40)
                 ? anara.utils.AssetManager.finalBossAttack1
                 : anara.utils.AssetManager.finalBossBasic;
 
+        int spriteW = 200;
+        int spriteH = 200;
+        int drawX = cx - spriteW / 2;
+        int drawY = cy - spriteH + 40;
+
         if (sprite != null) {
-            int spriteW = 120;
-            int spriteH = 120;
-            int drawX = cx - spriteW / 2;
-            int drawY = cy - spriteH + 20;
-
-            Graphics2D sg = (Graphics2D) p.create();
-            if (facingLeft) {
-                sg.translate(drawX + spriteW, drawY);
-                sg.scale(-1, 1);
-                sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
-            } else {
-                sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
-            }
-            sg.dispose();
-        } else {
-            // Fallback shape
-            p.setColor(enraged ? new Color(100, 20, 100) : new Color(20, 20, 80));
-            p.fillOval(cx - 38, cy - 38, 76, 76);
-        }
-
-        // Enraged text
-        if (enraged) {
-            p.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 12));
-            p.setColor(new Color(255, 100, 255));
-            p.drawString("MENGAMUK!", cx - 30, cy - 65);
-        }
-
+    Graphics2D sg = (Graphics2D) p.create();
+    if (facingLeft) {
+        sg.translate(drawX + spriteW, drawY);
+        sg.scale(-1, 1);
+        sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
+    } else {
+        sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
+    }
+    sg.dispose();
+} else {
+    // Fallback lebih besar dan jelas
+    p.setColor(enraged ? new Color(180, 0, 180) : new Color(80, 0, 180));
+    p.fillRect(cx - 60, cy - 80, 120, 120);
+    p.setColor(Color.WHITE);
+    p.setFont(new Font("Arial", Font.BOLD, 11));
+    p.drawString("FB NULL", cx - 25, cy - 20);
+}
         p.dispose();
     }
 }

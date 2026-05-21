@@ -1,5 +1,6 @@
 package anara.core;
 
+import anara.ui.StoryScreen;
 import anara.ui.*;
 import anara.model.PlayerData;
 import anara.audio.SoundManager;
@@ -17,7 +18,7 @@ public class GameEngine {
     private SoundManager soundManager;
 
     // Screen name constants
-    public static final String SCREEN_START       = "START";       // ← diubah: int→String, tambah StartScreen
+    public static final String SCREEN_START       = "START";
     public static final String SCREEN_LOGIN       = "LOGIN";
     public static final String SCREEN_MAIN_MENU   = "MAIN_MENU";
     public static final String SCREEN_MAP_SELECT  = "MAP_SELECT";
@@ -26,15 +27,14 @@ public class GameEngine {
     public static final String SCREEN_SHOP        = "SHOP";
     public static final String SCREEN_PLAYER_DATA = "PLAYER_DATA";
     public static final String SCREEN_SETTING     = "SETTING";
+    public static final String SCREEN_STORY       = "STORY";  // ← tambah ini
 
     private GameEngine() {
         soundManager = SoundManager.getInstance();
     }
 
     public static GameEngine getInstance() {
-        if (instance == null) {
-            instance = new GameEngine();
-        }
+        if (instance == null) instance = new GameEngine();
         return instance;
     }
 
@@ -53,9 +53,10 @@ public class GameEngine {
         AssetManager.loadAssets();
 
         // Register all screens
-        mainPanel.add(new StartScreen(),      SCREEN_START);       // ← baru
+        mainPanel.add(new StartScreen(),      SCREEN_START);
         mainPanel.add(new LoginScreen(),      SCREEN_LOGIN);
         mainPanel.add(new MainMenuScreen(),   SCREEN_MAIN_MENU);
+        mainPanel.add(new StoryScreen(),      SCREEN_STORY);   // ← tambah ini
         mainPanel.add(new MapSelectScreen(),  SCREEN_MAP_SELECT);
         mainPanel.add(new LoadingScreen(),    SCREEN_LOADING);
         mainPanel.add(new BattleScreen(),     SCREEN_BATTLE);
@@ -65,14 +66,12 @@ public class GameEngine {
 
         mainFrame.add(mainPanel);
         mainFrame.setVisible(true);
-
-        showScreen(SCREEN_START);                                   // ← diubah: LOGIN → START
+        showScreen(SCREEN_START);
     }
 
     private Cursor createCustomCursor() {
         Toolkit tk = Toolkit.getDefaultToolkit();
-        Image img = createCursorImage();
-        return tk.createCustomCursor(img, new Point(0, 0), "AnaraCursor");
+        return tk.createCustomCursor(createCursorImage(), new Point(0, 0), "AnaraCursor");
     }
 
     private Image createCursorImage() {
@@ -94,7 +93,6 @@ public class GameEngine {
     }
 
     public void showScreen(String screenName) {
-        // Re-create screens yang perlu data fresh setiap kali ditampilkan
         if (screenName.equals(SCREEN_MAIN_MENU)) {
             Component old = getScreenComponent(SCREEN_MAIN_MENU);
             if (old != null) mainPanel.remove(old);
@@ -110,6 +108,11 @@ public class GameEngine {
             if (old != null) mainPanel.remove(old);
             mainPanel.add(new ShopScreen(), SCREEN_SHOP);
         }
+        if (screenName.equals(SCREEN_STORY)) {  // ← tambah ini
+            Component old = getScreenComponent(SCREEN_STORY);
+            if (old != null) mainPanel.remove(old);
+            mainPanel.add(new StoryScreen(), SCREEN_STORY);
+        }
         cardLayout.show(mainPanel, screenName);
         mainPanel.revalidate();
         mainPanel.repaint();
@@ -117,9 +120,7 @@ public class GameEngine {
 
     public void showBattle(int mapId) {
         Component oldBattle = getScreenComponent(SCREEN_BATTLE);
-        if (oldBattle != null) {
-            mainPanel.remove(oldBattle);
-        }
+        if (oldBattle != null) mainPanel.remove(oldBattle);
         BattleScreen battle = new BattleScreen();
         battle.setMapId(mapId);
         mainPanel.add(battle, SCREEN_BATTLE);
@@ -134,9 +135,7 @@ public class GameEngine {
 
     private Component getScreenComponent(String name) {
         for (Component c : mainPanel.getComponents()) {
-            if (name.equals(c.getName())) {
-                return c;
-            }
+            if (name.equals(c.getName())) return c;
         }
         return null;
     }

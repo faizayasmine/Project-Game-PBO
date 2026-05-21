@@ -34,10 +34,10 @@ public class MapSelectScreen extends BasePanel {
     private final Rectangle rightArrowRect = new Rectangle(825, 290, 45, 55);
 
     private static final String[] MAP_NAMES = {
-        "PASUKAN PENJAGA",
-        "BERTAHAN HIDUP",
-        "DUA MINI BOSS",
-        "PENGUASA KEGELAPAN"
+        "DESA BARAT",
+        "HUTAN RAWA",
+        "BENTENG KABUT",
+        "ISTANA ARUNA"
     };
     private static final String[] MAP_SUBTITLES = {
         "MAP  I", "MAP  II", "MAP  III", "MAP  IV"
@@ -219,13 +219,24 @@ public class MapSelectScreen extends BasePanel {
         g2.drawString(sub, cx - g2.getFontMetrics().stringWidth(sub)/2, 100);
 
         // Render kartu — aktif paling atas
-        for (int i = 0; i < 4; i++) if (i != currentIndex) drawMapCard(g2, i);
-        drawMapCard(g2, currentIndex);
+for (int i = 0; i < 4; i++) if (i != currentIndex) drawMapCard(g2, i);
+drawMapCard(g2, currentIndex);
 
-        drawArrows(g2);
-        drawDots(g2, cx);
-        drawButton(g2, 30, 570, 120, 38, "◄ KEMBALI", false, false);
-        g2.dispose();
+// Panah navigasi & dots
+drawArrows(g2);
+drawDots(g2, cx);
+
+// Tombol KEMBALI - hijau
+g2.setColor(new Color(0x596900));
+g2.fillRoundRect(30, 570, 120, 38, 10, 10);
+g2.setColor(new Color(50, 200, 80));
+g2.setStroke(new BasicStroke(2f));
+g2.drawRoundRect(30, 570, 120, 38, 10, 10);
+g2.setFont(new Font("Serif", Font.BOLD, 14));
+g2.setColor(new Color(200, 255, 210));
+g2.drawString("◄ KEMBALI", 42, 594);
+
+g2.dispose();
     }
 
     @Override
@@ -311,20 +322,20 @@ public class MapSelectScreen extends BasePanel {
         FontMetrics fmN = g2.getFontMetrics();
         String numStr = String.valueOf(i+1);
         g2.drawString(numStr, bx+(bSz-fmN.stringWidth(numStr))/2, by+(bSz+fmN.getAscent()-fmN.getDescent())/2);
-
-        // ── 7. LABEL TERBUKA ──────────────────────────────────
-        int stFs = Math.max(8, (int)(r.width*0.040));
-        g2.setFont(new Font("SansSerif", Font.BOLD, stFs));
-        // Latar label kecil
-        String stTxt = "✓ TERBUKA";
-        FontMetrics fmSt = g2.getFontMetrics();
-        int stW = fmSt.stringWidth(stTxt);
-        int stX = r.x + r.width - stW - PAD - 4;
-        int stY = r.y + PAD;
-        g2.setColor(new Color(0,0,0,70));
-        g2.fillRoundRect(stX-4, stY-1, stW+8, fmSt.getHeight()+2, 6, 6);
-        g2.setColor(new Color(100,255,130));
-        g2.drawString(stTxt, stX, stY + fmSt.getAscent());
+//
+//        // ── 7. LABEL TERBUKA ──────────────────────────────────
+//        int stFs = Math.max(8, (int)(r.width*0.040));
+//        g2.setFont(new Font("SansSerif", Font.BOLD, stFs));
+//        // Latar label kecil
+//        String stTxt = "✓ TERBUKA";
+//        FontMetrics fmSt = g2.getFontMetrics();
+//        int stW = fmSt.stringWidth(stTxt);
+//        int stX = r.x + r.width - stW - PAD - 4;
+//        int stY = r.y + PAD;
+//        g2.setColor(new Color(0,0,0,70));
+//        g2.fillRoundRect(stX-4, stY-1, stW+8, fmSt.getHeight()+2, 6, 6);
+//        g2.setColor(new Color(100,255,130));
+//        g2.drawString(stTxt, stX, stY + fmSt.getAscent());
 
         // ── 8. BODY: SUBTITLE + NAMA MAP ─────────────────────
         int curY = bodyY + 10;

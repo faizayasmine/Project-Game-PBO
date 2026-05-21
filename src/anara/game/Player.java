@@ -14,16 +14,9 @@ public class Player extends Entity {
     public boolean isAttacking = false;
     public boolean isUsingSkill = false;
     public int attackFrame = 0;
-<<<<<<< HEAD
-    private int skillFrame = 0;
-=======
-    
-    // ── TAMBAHKAN VARIABLE BARU UNTUK SKILL ANIMASI ──────────────────────────
     public boolean isSkilling = false;
     public int skillFrame = 0;
-    // ─────────────────────────────────────────────────────────────────────────
-    
->>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
+
     private float animPhase = 0f;
     private boolean mainPlayer = false;
     private boolean jumping = false;
@@ -35,15 +28,13 @@ public class Player extends Entity {
     private final float jumpPower = -14f;
     private final int groundY = 460;
 
-    // ===== Platform data (bisa diset dari luar untuk map berbeda) =====
-    // Format: {x_start, x_end, y} untuk setiap platform
+    // Platform data (diset dari luar sesuai map)
     private int[][] platforms = {};
 
     public Player(float x, float y) {
         super(x, y, 200, 35, 5, 3);
     }
 
-    /** Set platform aktif sesuai map */
     public void setPlatforms(int[][] platforms) {
         this.platforms = platforms;
     }
@@ -58,73 +49,49 @@ public class Player extends Entity {
         velocityY = jumpPower;
     }
 
- public void updateJump() {
-    if (!mainPlayer) return;
+    public void updateJump() {
+        if (!mainPlayer) return;
 
-    if (!onGround) {
-        y += velocityY;
-        velocityY += gravity;
-    }
-
-    // ===== DEFINISI PLATFORM (sesuaikan dengan posisi visual di background) =====
-    int[][] platforms = {
-        // {xStart, xEnd, y}
-        {0,   220, 270},   // platform batu KIRI
-        {880, 1100, 270},  // platform batu KANAN
-    };
-
-    // Cek landing di setiap platform
-    for (int[] plat : platforms) {
-        int pxStart = plat[0];
-        int pxEnd   = plat[1];
-        int platY   = plat[2];
-
-        if (x >= pxStart && x <= pxEnd) {
-            if (velocityY > 0 && y >= platY - 5 && y <= platY + 15) {
-                y = platY;
-                jumping = false;
-                onGround = true;
-                velocityY = 0;
-                return;
-            }
-<<<<<<< HEAD
-            // Jatuh dari platform
-            if (onGround && y == platY) {
-                if (x < pxStart || x > pxEnd) {
-                    onGround = false;
-                    jumping = true;
-                    velocityY = 0;
-                }
-=======
+        if (!onGround) {
+            y += velocityY;
+            velocityY += gravity;
         }
 
-        // ===== LOGIKA LANDING DI TANAH DASAR =====
+        // BUG 4 FIX: Platform batu di pinggir — gunakan platforms yang diset dari BattleScreen
+        // Format {xStart, xEnd, y} — hanya aktif kalau platforms sudah diset (map 2)
+        for (int[] plat : platforms) {
+            int pxStart = plat[0];
+            int pxEnd   = plat[1];
+            int platY   = plat[2];
+
+            if (x >= pxStart && x <= pxEnd) {
+                // Mendarat di platform dari atas
+                if (velocityY > 0 && y >= platY - 5 && y <= platY + 15) {
+                    y         = platY;
+                    jumping   = false;
+                    onGround  = true;
+                    velocityY = 0;
+                    return;
+                }
+                // Jatuh dari tepi platform
+                if (onGround && y == platY) {
+                    if (x < pxStart || x > pxEnd) {
+                        onGround  = false;
+                        jumping   = true;
+                        velocityY = 0;
+                    }
+                }
+            }
+        }
+
+        // Tanah dasar
         if (y >= groundY) {
-            y = groundY;
-            jumping = false;
-            onGround = true;
+            y         = groundY;
+            jumping   = false;
+            onGround  = true;
             velocityY = 0;
         }
-
-        // ===== LOGIKA JATUH DARI PLATFORM =====
-        if (onGround && y == platY) {
-            if (x < platXStart || x > platXEnd) {
-                onGround = false;
-                jumping = true;
-                velocityY = 0; // Mulai jatuh bebas dengan gravitasi
->>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
-            }
-        }
     }
-
-    // Tanah dasar
-    if (y >= groundY) {
-        y = groundY;
-        jumping = false;
-        onGround = true;
-        velocityY = 0;
-    }
-}
 
     public void setX(float x) { this.x = x; }
     public void setY(float y) { this.y = y; }
@@ -143,38 +110,24 @@ public class Player extends Entity {
         if (skillCooldown > 0)    skillCooldown--;
         if (invincibleFrames > 0) invincibleFrames--;
 
-        // Update frame attack
         if (isAttacking) {
             attackFrame++;
             if (attackFrame > 12) { isAttacking = false; attackFrame = 0; }
         }
 
-<<<<<<< HEAD
-        if (isUsingSkill) {
-            skillFrame++;
-            if (skillFrame > 20) { isUsingSkill = false; skillFrame = 0; }
-=======
-        // ── UPDATE FRAME SKILL ────────────────────────────────────────────────
         if (isSkilling) {
             skillFrame++;
-            if (skillFrame > 20) { // Durasi pose skill (20 frame ~ 0.5 detik)
-                isSkilling = false;
-                skillFrame = 0;
-            }
-        }
-        // ─────────────────────────────────────────────────────────────────────
-
-        // Update arah hadap berdasarkan gerakan
-        if (dx < -0.1f) facingLeft = true;
-        else if (dx > 0.1f) facingLeft = false;
-
-        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-            angle = (float) Math.atan2(dy, dx);
->>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
+            if (skillFrame > 20) { isSkilling = false; skillFrame = 0; }
         }
 
         if (dx < -0.1f)      facingLeft = true;
         else if (dx > 0.1f)  facingLeft = false;
+
+        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+            angle = (float) Math.atan2(dy, dx);
+            if (dx < -0.1f)      facingLeft = true;
+            else if (dx > 0.1f)  facingLeft = false;
+        }
     }
 
     public void addMovement(float mx, float my) {
@@ -189,40 +142,21 @@ public class Player extends Entity {
 
     public int doAttack() {
         attackCooldown = 25;
-<<<<<<< HEAD
         isAttacking    = true;
         attackFrame    = 0;
-=======
-        isAttacking = true;
-        attackFrame = 0;
-        
-        // Batalkan pose skill jika mendadak attack biasa
-        isSkilling = false; 
-        skillFrame = 0;
-        
->>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
+        isSkilling     = false;
+        skillFrame     = 0;
         return attack + attackBonusExternal;
     }
 
-    // ── MODIFIKASI METHOD DOSKILL ────────────────────────────────────────────
     public int doSkill() {
-<<<<<<< HEAD
-        skillCooldown  = 90;
-        isUsingSkill   = true;
-        skillFrame     = 0;
-=======
         skillCooldown = 90;
-        isSkilling = true;  // Mengaktifkan state skill
-        skillFrame = 0;
-        
-        // Batalkan pose attack jika mendadak cast skill
-        isAttacking = false;
-        attackFrame = 0;
-        
->>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
+        isSkilling    = true;
+        skillFrame    = 0;
+        isAttacking   = false;
+        attackFrame   = 0;
         return (attack + attackBonusExternal) * 2;
     }
-    // ─────────────────────────────────────────────────────────────────────────
 
     public void hit(int dmg) {
         if (invincibleFrames > 0) return;
@@ -248,72 +182,46 @@ public class Player extends Entity {
 
         boolean blinkHide = isInvincible() && (invincibleFrames / 5) % 2 == 0;
 
-        // Bayangan selalu digambar
+        // Bayangan
         p.setColor(new Color(0, 0, 0, 80));
         p.fillOval(cx - 18, cy + 18, 36, 12);
 
-<<<<<<< HEAD
-        if (!blinkHide) {
-            BufferedImage sprite;
-            if (!isAlive()) {
-                sprite = anara.utils.AssetManager.playerEliminasi;
-            } else if (isUsingSkill || isAttacking) {
-                sprite = anara.utils.AssetManager.playerAttack;
-            } else if (Math.abs(dx) > 0.1f) {
-                sprite = anara.utils.AssetManager.playerLari;
-=======
-        // ── SISTEM SELEKSI SPRITE PLAYER (DENGAN ASSET SKILL) ──────────────────
         BufferedImage sprite;
+
         if (!isAlive()) {
             sprite = anara.utils.AssetManager.playerEliminasi;
         } else if (isSkilling) {
-            // Jika sedang skill, ambil sprite khusus dari AssetManager
-            sprite = anara.utils.AssetManager.playerSkill;
-        } else if (isAttacking) {
+            // BUG 1 FIX: Skill = serangan JARAK JAUH → pakai playerAttack (tembak)
+            // Attack klik kiri = serangan DEKAT → pakai playerSkill (slash)
             sprite = anara.utils.AssetManager.playerAttack;
-        } else if (Math.abs(dx) > 0.1f || jumping) { 
+        } else if (isAttacking) {
+            // Serangan dekat (klik kiri) → pakai playerSkill (slash/melee)
+            sprite = anara.utils.AssetManager.playerSkill;
+        } else if (Math.abs(dx) > 0.1f || jumping) {
             sprite = anara.utils.AssetManager.playerLari;
         } else {
             sprite = anara.utils.AssetManager.playerBasic;
         }
-        // ─────────────────────────────────────────────────────────────────────
 
-        // Gambar sprite dengan flip arah
         if (sprite != null) {
             int spriteW = 80;
             int spriteH = 80;
-            int drawX = cx - spriteW / 2;
-            int drawY = cy - spriteH + 20;
+            int drawX   = cx - spriteW / 2;
+            int drawY   = cy - spriteH + 20;
 
             Graphics2D pg = (Graphics2D) p.create();
+
             if (!isAlive()) {
                 pg.drawImage(sprite, drawX, drawY, spriteW, 50, null);
             } else if (facingLeft) {
                 pg.translate(drawX + spriteW, drawY);
                 pg.scale(-1, 1);
                 pg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
->>>>>>> 3c26212bdf5912f2a6eb7fec5ca816bb38a47d07
             } else {
-                sprite = anara.utils.AssetManager.playerBasic;
+                pg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
             }
 
-            if (sprite != null) {
-                int spriteW = 80, spriteH = 80;
-                int drawX = cx - spriteW / 2;
-                int drawY = cy - spriteH + 20;
-
-                Graphics2D pg = (Graphics2D) p.create();
-                if (!isAlive()) {
-                    pg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
-                } else if (facingLeft) {
-                    pg.translate(drawX + spriteW, drawY);
-                    pg.scale(-1, 1);
-                    pg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
-                } else {
-                    pg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
-                }
-                pg.dispose();
-            }
+            pg.dispose();
         }
 
         p.dispose();

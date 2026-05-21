@@ -22,6 +22,7 @@ public class AssetManager {
     public static BufferedImage miniBossAttack2;
     public static BufferedImage finalBossBasic;
     public static BufferedImage finalBossAttack1;
+        public static BufferedImage finalBossAttack2;
     public static BufferedImage map1Background;
     public static BufferedImage beranda;
     public static BufferedImage map3Background;
@@ -31,6 +32,7 @@ public class AssetManager {
     public static BufferedImage map4Background;
     public static BufferedImage map2Background;
 public static BufferedImage map2Foreground; // batu
+public static BufferedImage dataplayer;
 
     public static void loadAssets() {
         playerBasic = load("/assets/images/playerbasic.png");
@@ -47,7 +49,9 @@ public static BufferedImage map2Foreground; // batu
         miniBossAttack1 = load("/assets/images/minimonsterattack1.png");
         miniBossAttack2 = load("/assets/images/minimonsterattack2.png");
         finalBossBasic = load("/assets/images/finalbosbasic.png");
-        finalBossAttack1 = load("/assets/images/finalbosattack1.png");
+        finalBossAttack1 = load("/assets/images/finalbosattackjauh.png");
+        finalBossAttack2 = load("/assets/images/finalbosattackdekat.png");
+        
         map1Background = load("/assets/images/map1.png");
         beranda = load("/assets/images/tampilan.png");
         map3Background = load("/assets/images/MAP3.png");
@@ -62,6 +66,7 @@ public static BufferedImage map2Foreground; // batu
         map4Background = load("/assets/images/map4.png");
         map2Background = load("/assets/images/map2.png");
 map2Foreground = load("/assets/images/batu.png");
+dataplayer = load("/assets/images/dataplayer.png");
     }
 
     private static BufferedImage load(String path) {

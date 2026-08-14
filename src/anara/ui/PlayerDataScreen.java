@@ -11,6 +11,8 @@ import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class PlayerDataScreen extends BasePanel {
+
+    private static final long serialVersionUID = 1L;
     private int hoveredBtn = -1;
     private Timer animTimer;
     private float animPhase = 0f;
@@ -26,6 +28,12 @@ public class PlayerDataScreen extends BasePanel {
             repaint();
         });
         animTimer.start();
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        if (animTimer != null) animTimer.stop();
     }
 
     private void setupMouseListeners() {

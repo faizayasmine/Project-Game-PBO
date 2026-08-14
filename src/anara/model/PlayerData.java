@@ -7,6 +7,7 @@ public class PlayerData implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private String userId;
     private String name;
     private String password;
     private int gold;
@@ -15,16 +16,22 @@ public class PlayerData implements Serializable {
     private int[] mapProgress;
     private int diamond;
 
-    public PlayerData(String name) {
+    public PlayerData(String userId, String name) {
+        this.userId = userId;
         this.name = name;
         this.gold = 300;
         this.diamond = 0;
         this.inventory = new ArrayList<>();
         this.equippedItems = new ArrayList<>();
-        this.mapProgress = new int[]{1, 1, 1, 1};
+        // Hanya Map 1 yang terbuka dari awal; map lain terbuka setelah menang map sebelumnya.
+        this.mapProgress = new int[]{1, 0, 0, 0};
     }
 
     // --- Getters & Setters ---
+    public String getUserId() {
+        return userId;
+    }
+
     public String getName() {
         return name;
     }
@@ -69,6 +76,18 @@ public class PlayerData implements Serializable {
         return mapProgress;
     }
 
+    /** Buka map berikutnya (dipanggil setelah menang battle). Map di luar indeks 0..3 diabaikan. */
+    public void unlockMap(int mapIndex) {
+        if (mapIndex >= 0 && mapIndex < mapProgress.length) {
+            mapProgress[mapIndex] = 1;
+        }
+    }
+
+    public boolean isMapUnlocked(int mapIndex) {
+        if (mapIndex < 0 || mapIndex >= mapProgress.length) return false;
+        return mapProgress[mapIndex] == 1;
+    }
+
     public void addItem(ShopItem item) {
         inventory.add(item);
     }
@@ -78,11 +97,24 @@ public class PlayerData implements Serializable {
         equippedItems.remove(item);
     }
 
+    /**
+     * Equip item. Dibatasi maksimal 1 item aktif per tipe (WEAPON/SKILL) —
+     * mengequip item baru otomatis melepas item lain dari tipe yang sama,
+     * supaya bonus stat tidak menumpuk tanpa batas.
+     */
     public void equipItem(ShopItem item) {
-        if (inventory.contains(item) && !equippedItems.contains(item)) {
-            equippedItems.add(item);
-            item.setEquipped(true);
+        if (!inventory.contains(item) || equippedItems.contains(item)) {
+            return;
         }
+        equippedItems.removeIf(i -> {
+            if (i.getType() == item.getType()) {
+                i.setEquipped(false);
+                return true;
+            }
+            return false;
+        });
+        equippedItems.add(item);
+        item.setEquipped(true);
     }
 
     public void unequipItem(ShopItem item) {

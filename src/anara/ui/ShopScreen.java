@@ -16,6 +16,8 @@ import java.util.List;
 
 public class ShopScreen extends BasePanel {
 
+    private static final long serialVersionUID = 1L;
+
     private enum Tab { SHOP, INVENTORY }
     private Tab activeTab = Tab.SHOP;
 
@@ -44,30 +46,30 @@ public class ShopScreen extends BasePanel {
     ));
 
    public ShopScreen() {
-    setName(GameEngine.SCREEN_SHOP); // tambahkan baris ini
+    setName(GameEngine.SCREEN_SHOP);
     setupMouseListeners();
     uiTimer = new javax.swing.Timer(100, e -> {
         if (statusTimer > 0) { statusTimer--; repaint(); }
     });
     uiTimer.start();
 }
-//    public ShopScreen() {
-//        setupMouseListeners();
-//        uiTimer = new javax.swing.Timer(100, e -> {
-//            if (statusTimer > 0) { statusTimer--; repaint(); }
-//        });
-//        uiTimer.start();
-//    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        if (uiTimer != null) uiTimer.stop();
+    }
 
     // ===== HELPERS =====
     private BufferedImage getItemImage(String id) {
         switch (id) {
-            case "w1": return AssetManager.senjata2;
-            case "w2": return AssetManager.senjata3;
-            case "w3": return AssetManager.senjata4;
-            case "s1": return AssetManager.skil2;
-            case "s2": return AssetManager.skil3;
-            case "s3": return AssetManager.skil1;
+            case "w1": return AssetManager.senjata1;
+            case "w2": return AssetManager.senjata2;
+            case "w3": return AssetManager.senjata3;
+            case "w4": return AssetManager.senjata4;
+            case "s1": return AssetManager.skil1;
+            case "s2": return AssetManager.skil2;
+            case "s3": return AssetManager.skil3;
             default:   return AssetManager.senjata1;
         }
     }

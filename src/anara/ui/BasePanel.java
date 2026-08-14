@@ -6,6 +6,8 @@ import java.awt.geom.*;
 
 public abstract class BasePanel extends JPanel {
 
+    private static final long serialVersionUID = 1L;
+
     // === THEME PALETTE ===
     protected static final Color COL_BG_DARK     = new Color(10, 8, 15);
     protected static final Color COL_BG_MID      = new Color(20, 16, 30);

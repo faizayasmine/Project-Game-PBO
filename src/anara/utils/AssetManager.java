@@ -22,7 +22,7 @@ public class AssetManager {
     public static BufferedImage miniBossAttack2;
     public static BufferedImage finalBossBasic;
     public static BufferedImage finalBossAttack1;
-        public static BufferedImage finalBossAttack2;
+    public static BufferedImage finalBossAttack2;
     public static BufferedImage map1Background;
     public static BufferedImage beranda;
     public static BufferedImage map3Background;
@@ -31,15 +31,15 @@ public class AssetManager {
     public static BufferedImage skil1, skil2, skil3;
     public static BufferedImage map4Background;
     public static BufferedImage map2Background;
-public static BufferedImage map2Foreground; // batu
-public static BufferedImage dataplayer;
+    public static BufferedImage map2Foreground; // batu
+    public static BufferedImage dataplayer;
 
     public static void loadAssets() {
         playerBasic = load("/assets/images/playerbasic.png");
-        playerAttack = load("/assets/images/playerattack.png");
+        playerAttack = load("/assets/images/playerattackNew.png");
         playerLari = load("/assets/images/playerlari.png");
         playerSkill = load("/assets/images/playerskill.png");
-        playerEliminasi = load("/assets/images/playerelminasi.png");
+        playerEliminasi = load("/assets/images/playereliminasi.png");
         soldierBasic = load("/assets/images/soliderbasic.png");
         soldierJalan1 = load("/assets/images/soliderjalan1.png");
         soldierJalan2 = load("/assets/images/soliderjalan2.png");
@@ -50,11 +50,11 @@ public static BufferedImage dataplayer;
         miniBossAttack2 = load("/assets/images/minimonsterattack2.png");
         finalBossBasic = load("/assets/images/finalbosbasic.png");
         finalBossAttack1 = load("/assets/images/finalbosattackjauh.png");
-        finalBossAttack2 = load("/assets/images/finalbosattackdekat.png");
-        
+        finalBossAttack2 = load("/assets/images/finalbossattackdekat.png");
+
         map1Background = load("/assets/images/map1.png");
         beranda = load("/assets/images/tampilan.png");
-        map3Background = load("/assets/images/MAP3.png");
+        map3Background = load("/assets/images/map3.png");
         Shop = load("/assets/images/shop.png");
         senjata1 = load("/assets/images/senjata1.png");
         senjata2 = load("/assets/images/senjata2.png");
@@ -65,8 +65,8 @@ public static BufferedImage dataplayer;
         skil3 = load("/assets/images/skil3.png");
         map4Background = load("/assets/images/map4.png");
         map2Background = load("/assets/images/map2.png");
-map2Foreground = load("/assets/images/batu.png");
-dataplayer = load("/assets/images/dataplayer.png");
+        map2Foreground = load("/assets/images/batu.png");
+        dataplayer = load("/assets/images/dataplayer.png");
     }
 
     private static BufferedImage load(String path) {

@@ -13,8 +13,11 @@ import java.io.IOException;
 import java.util.Random;
 
 public class MapSelectScreen extends BasePanel {
+
+    private static final long serialVersionUID = 1L;
     private int hoveredMap = -1;
     private int currentIndex = 0;
+    private int lockedMsgTimer = 0;
     private double animatedScroll = 0.0;
     private javax.swing.Timer animationTimer;
 
@@ -43,7 +46,7 @@ public class MapSelectScreen extends BasePanel {
         "MAP  I", "MAP  II", "MAP  III", "MAP  IV"
     };
     private static final String[] MAP_DESC = {
-        "Kalahkan 5 prajurit monster\n& Mini Boss Final Boss.",
+        "Kalahkan 5 prajurit monster\n& hadapi Mini Boss.",
         "Bertahan 15 detik dari\nserangan massal musuh.",
         "Hadapi 2 Mini Boss\nsecara bersamaan.",
         "FINAL BATTLE — Hadapi\nFinal Boss sejati!"
@@ -108,6 +111,13 @@ public class MapSelectScreen extends BasePanel {
         setupParticleTimer();
     }
 
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        if (particleTimer != null) particleTimer.stop();
+        if (animationTimer != null) animationTimer.stop();
+    }
+
     // ── Inisialisasi posisi partikel acak ──────────────────
     private void initParticles() {
         Random rng = new Random(42);
@@ -122,6 +132,7 @@ public class MapSelectScreen extends BasePanel {
         particleTimer = new javax.swing.Timer(50, e -> {
             particleTick += 0.04f;
             if (particleTick > 1000f) particleTick = 0f;
+            if (lockedMsgTimer > 0) lockedMsgTimer--;
             repaint();
         });
         particleTimer.start();
@@ -176,8 +187,18 @@ public class MapSelectScreen extends BasePanel {
                 if (currentIndex < 3 && rightArrowRect.contains(e.getPoint())) {
                     currentIndex++; if (!animationTimer.isRunning()) animationTimer.start(); return;
                 }
-                for (int i = 0; i < 4; i++)
-                    if (getMapRect(i).contains(e.getPoint())) { GameEngine.getInstance().showBattle(i+1); return; }
+                for (int i = 0; i < 4; i++) {
+                    if (getMapRect(i).contains(e.getPoint())) {
+                        anara.model.PlayerData pd = GameEngine.getInstance().getCurrentPlayer();
+                        if (pd != null && !pd.isMapUnlocked(i)) {
+                            lockedMsgTimer = 90;
+                            repaint();
+                            return;
+                        }
+                        GameEngine.getInstance().showBattle(i + 1);
+                        return;
+                    }
+                }
                 if (getBackRect().contains(e.getPoint()))
                     GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAIN_MENU);
             }

@@ -26,11 +26,13 @@ public class MiniBoss extends Entity {
         if (distanceX > attackRange) {
             if (this.x > playerX) this.x -= miniBossSpeed;
             else                  this.x += miniBossSpeed;
-        } else {
-            if (this.attackCooldown <= 0) this.attackCooldown = 60;
         }
 
-        if (this.attackCooldown > 0) this.attackCooldown--;
+        // BUG 1 FIX: Cooldown hanya berkurang di sini, tidak direset otomatis di dalam update
+        if (this.attackCooldown > 0) {
+            this.attackCooldown--;
+        }
+        
         animPhase += 0.08f;
         animTick++;
     }
@@ -42,7 +44,8 @@ public class MiniBoss extends Entity {
     }
 
     public int doAttack() {
-        attackCooldown = 30;
+        // Cooldown direset ke 60 tick setelah menyerang berhasil dieksekusi
+        attackCooldown = 60;
         return attack;
     }
 
@@ -69,11 +72,11 @@ public class MiniBoss extends Entity {
 
             Graphics2D sg = (Graphics2D) p.create();
             if (facingLeft) {
-                sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
-            } else {
                 sg.translate(drawX + spriteW, drawY);
                 sg.scale(-1, 1);
                 sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
+            } else {
+                sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
             }
             sg.dispose();
         } else {
@@ -94,8 +97,6 @@ public class MiniBoss extends Entity {
         p.setColor(new Color(80, 20, 20));
         p.setStroke(new BasicStroke(1f));
         p.drawRect(cx - 36, hudY, 72, 7);
-
-        // Label "MINI BOSS" DIHAPUS
 
         p.dispose();
     }

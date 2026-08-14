@@ -7,6 +7,7 @@ import anara.game.MiniBoss;
 import anara.game.FinalBoss;
 import anara.model.PlayerData;
 import anara.utils.SaveManager;
+import anara.audio.SoundManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BattleScreen extends BasePanel {
+
+    private static final long serialVersionUID = 1L;
 
     private int bossSpawnCooldown = 0;
     private boolean finalBossAppeared = false;
@@ -105,8 +108,10 @@ public class BattleScreen extends BasePanel {
             });
         }
 
-        player.setExternalBonuses(pd.getTotalAttackBonus());
+        player.setExternalBonuses(pd.getTotalAttackBonus(), pd.getTotalSkillBonus());
         initMap();
+
+        SoundManager.getInstance().playBGM("battle_theme");
 
         gameLoop = new javax.swing.Timer(16, e -> tick());
         gameLoop.start();
@@ -190,6 +195,7 @@ public class BattleScreen extends BasePanel {
             return;
         }
 
+        player.resetHorizontalVelocity();
         float playerSpeed = 4.0f;
         float moveX = 0;
         if (keyLeft) {
@@ -235,6 +241,10 @@ public class BattleScreen extends BasePanel {
             if (!miniBossSpawned && player.getX() >= WORLD_W - 600) {
                 soldiers.clear();
                 spawnMiniBosses(2);
+            }
+            if (finishArea != null && !reachedFinish
+                    && finishArea.contains((int) player.getX(), (int) player.getY())) {
+                reachedFinish = true;
             }
         } else {
             player.update(mousePos.x, mousePos.y, MAP_W, MAP_H);
@@ -380,7 +390,7 @@ public class BattleScreen extends BasePanel {
                 }
                 break;
             case 3:
-                if (miniBossSpawned && miniBosses.stream().noneMatch(MiniBoss::isAlive)) {
+                if (reachedFinish && miniBossSpawned && miniBosses.stream().noneMatch(MiniBoss::isAlive)) {
                     endBattle(true);
                 }
                 break;
@@ -397,10 +407,14 @@ public class BattleScreen extends BasePanel {
         if (gameLoop != null) {
             gameLoop.stop();
         }
+        SoundManager.getInstance().stopAll();
         if (won) {
             PlayerData pd = GameEngine.getInstance().getCurrentPlayer();
             int reward = 50 + mapId * 30;
             pd.setGold(pd.getGold() + reward);
+            if (mapId < 4) {
+                pd.unlockMap(mapId); // buka map berikutnya (index mapId = map ke-(mapId+1))
+            }
             SaveManager.savePlayer(pd);
         }
         repaint();
@@ -414,6 +428,7 @@ public class BattleScreen extends BasePanel {
             return;
         }
         int dmg = player.doAttack();
+        SoundManager.getInstance().playSFX("attack_swing");
         float px = player.getX(), py = player.getY();
         float range = 350f; 
 
@@ -430,7 +445,7 @@ public class BattleScreen extends BasePanel {
                 
                 // Logika Normal: Hadap kanan artinya dx >= 0, hadap kiri artinya dx <= 0
                 boolean isEnemyInFront = (facingRight && dx >= 0) || (!facingRight && dx <= 0);
-                boolean isOverlapping = Math.abs(dx) <= 0; // Toleransi kalau bertumpuk dekat
+                boolean isOverlapping = Math.abs(dx) <= 20; // Toleransi kalau bertumpuk dekat
 
                 // JALUR SERANG: Jika tidak di depan AND tidak bertumpuk, maka SKIP (tidak kena hit)
                 if (!isEnemyInFront && !isOverlapping) {

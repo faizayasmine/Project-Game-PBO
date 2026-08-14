@@ -12,6 +12,8 @@ import java.awt.BasicStroke;
 
 public class MainMenuScreen extends BasePanel {
 
+    private static final long serialVersionUID = 1L;
+
     private int hoveredBtn = -1;
     private Timer animTimer;
     private float animPhase = 0f;
@@ -111,6 +113,12 @@ private Rectangle getBtnRect(int index) {
             repaint();
         });
         animTimer.start();
+    }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        if (animTimer != null) animTimer.stop();
     }
 
     @Override

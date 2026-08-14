@@ -11,6 +11,7 @@ public class Player extends Entity {
     private int invincibleFrames = 0;
     private int attackBonusExternal = 0;
     private int defenseBonusExternal = 0;
+    private int skillBonusExternal = 0;
     public boolean isAttacking = false;
     public boolean isUsingSkill = false;
     public int attackFrame = 0;
@@ -39,8 +40,12 @@ public class Player extends Entity {
         this.platforms = platforms;
     }
 
-    public void setExternalBonuses(int atk) {
+    public void setExternalBonuses(int atk, int skillBonus) {
         attackBonusExternal = atk;
+        skillBonusExternal = skillBonus;
+        // Catatan: defenseBonusExternal sengaja tidak diisi di sini karena
+        // belum ada kategori item DEFENSE di shop. Kalau nanti ditambahkan,
+        // sambungkan lewat parameter baru di sini, jangan biarkan menggantung.
     }
 
     public void setMainPlayer(boolean b) {
@@ -116,9 +121,21 @@ public class Player extends Entity {
         return y;
     }
 
+    /**
+     * Reset kecepatan horizontal. Harus dipanggil di AWAL setiap tick,
+     * SEBELUM addMovement() dipanggil — supaya dx yang baru diisi oleh
+     * addMovement() tidak langsung tertimpa nol lagi oleh update().
+     */
+    public void resetHorizontalVelocity() {
+        dx = 0;
+    }
+
     @Override
     public void update(float targetX, float targetY, int mapW, int mapH) {
-        dx = 0;
+        // Catatan: Player tidak mengejar target manapun (kontrol via keyboard,
+        // bukan AI-chase seperti Soldier/MiniBoss/FinalBoss), jadi targetX/targetY
+        // sengaja tidak dipakai di sini — parameter dipertahankan agar tanda
+        // tangan method tetap konsisten dengan override Entity lainnya.
         updateJump();
         animPhase += 0.08f;
 
@@ -194,12 +211,13 @@ public class Player extends Entity {
     }
 
     public int doSkill() {
-        skillCooldown = 90;
+        // Makin besar bonus SKL dari item yang di-equip, makin cepat cooldown-nya
+        skillCooldown = Math.max(30, 90 - skillBonusExternal);
         isSkilling = true;
         skillFrame = 0;
         isAttacking = false;
         attackFrame = 0;
-        return (attack + attackBonusExternal) * 2;
+        return (attack + attackBonusExternal) * 2 + skillBonusExternal;
     }
 
     public void hit(int dmg) {
@@ -245,11 +263,11 @@ public class Player extends Entity {
         if (!isAlive()) {
             sprite = anara.utils.AssetManager.playerEliminasi; // Mati pakai sprite eliminasi
         } else if (isSkilling) {
-            sprite = anara.utils.AssetManager.playerEliminasi;     // Skill pakai sprite skill
+            sprite = anara.utils.AssetManager.playerSkill;      // Skill pakai sprite skill (bukan sprite mati)
         } else if (isAttacking) {
             sprite = anara.utils.AssetManager.playerAttack;
         } else if (Math.abs(dx) > 0.1f || jumping) {
-            sprite = anara.utils.AssetManager.playerSkill;      // Bergerak/lompat pakai sprite lari
+            sprite = anara.utils.AssetManager.playerLari;       // Bergerak/lompat pakai sprite lari yang benar
         } else {
             sprite = anara.utils.AssetManager.playerBasic;
         }

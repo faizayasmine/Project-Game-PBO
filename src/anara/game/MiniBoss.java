@@ -72,11 +72,11 @@ public class MiniBoss extends Entity {
 
             Graphics2D sg = (Graphics2D) p.create();
             if (facingLeft) {
-                sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
-            } else {
                 sg.translate(drawX + spriteW, drawY);
                 sg.scale(-1, 1);
                 sg.drawImage(sprite, 0, 0, spriteW, spriteH, null);
+            } else {
+                sg.drawImage(sprite, drawX, drawY, spriteW, spriteH, null);
             }
             sg.dispose();
         } else {

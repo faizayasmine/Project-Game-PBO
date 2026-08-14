@@ -8,6 +8,8 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class SettingScreen extends BasePanel {
+
+    private static final long serialVersionUID = 1L;
     private int hoveredBtn = -1;
 
     public SettingScreen() {

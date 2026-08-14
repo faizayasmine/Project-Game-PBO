@@ -16,6 +16,8 @@ import java.util.Random;
  */
 public class StartScreen extends BasePanel {
 
+    private static final long serialVersionUID = 1L;
+
     // ── Animasi ──────────────────────────────────────────────────────────────
     private Timer animTimer;
     private float glowPhase = 0f;
@@ -77,27 +79,24 @@ public class StartScreen extends BasePanel {
         System.err.println("[StartScreen] Gambar tidak ditemukan di mana pun!");
     }
 
-    // ── Load Custom Font dari Direktori Spesifik ─────────────────────────────
+    // ── Load Custom Font dari classpath (bukan lagi path absolut komputer developer) ──
     private void loadCustomFont() {
-        // Path absolut mengarah langsung ke folder font di Windows Anda
-        String fontPath = "C:/Users/Iqbal/Project-Game-PBO/src/Assets/font/ari-w9500-condensed-bold.ttf";
-        File fontFile = new File(fontPath);
-
-        if (fontFile.exists()) {
-            try {
-                // Membaca file font .ttf kustom
-                customFont = Font.createFont(Font.TRUETYPE_FONT, fontFile);
-                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                ge.registerFont(customFont);
-                System.out.println("[StartScreen] Font ari-w9500 berhasil dimuat dari: " + fontFile.getAbsolutePath());
-                return;
+        String[] candidates = {
+            "/assets/font/ari-w9500-condensed-bold.ttf",
+            "/Assets/font/ari-w9500-condensed-bold.ttf"
+        };
+        for (String path : candidates) {
+            try (java.io.InputStream is = getClass().getResourceAsStream(path)) {
+                if (is != null) {
+                    customFont = Font.createFont(Font.TRUETYPE_FONT, is);
+                    GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(customFont);
+                    System.out.println("[StartScreen] Font ari-w9500 berhasil dimuat dari: " + path);
+                    return;
+                }
             } catch (Exception e) {
-                System.err.println("[StartScreen] Gagal membaca berkas font di " + fontPath + " (" + e.getMessage() + ")");
+                System.err.println("[StartScreen] Gagal membaca font di " + path + " (" + e.getMessage() + ")");
             }
-        } else {
-            System.err.println("[StartScreen] Berkas font TIDAK DITEMUKAN di path: " + fontPath);
         }
-
         // Fallback jika file tidak ditemukan atau error saat dibaca
         System.err.println("[StartScreen] Menggunakan font sistem Monospaced sebagai cadangan.");
         customFont = new Font("Monospaced", Font.BOLD, 12);

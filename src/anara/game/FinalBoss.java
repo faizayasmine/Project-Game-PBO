@@ -12,6 +12,7 @@ public class FinalBoss extends Entity {
     private int animTick = 0;
     private boolean facingLeft = false;
     private int specialVisualTimer = 0;
+    private int meleeVisualTimer = 0;
 
     public FinalBoss(float x, float y) {
         super(x, y, 1000, 45, 8, 1);
@@ -27,6 +28,7 @@ public void update(float targetX, float targetY, int mapW, int mapH) {
         attack = 50;
     }
     if (specialVisualTimer > 0) specialVisualTimer--;
+    if (meleeVisualTimer > 0) meleeVisualTimer--;
 
     // Hanya kejar X, Y dikunci di tanah
     float dx = targetX - x;
@@ -51,12 +53,6 @@ public void update(float targetX, float targetY, int mapW, int mapH) {
     if (specialCooldown > 0) specialCooldown--;
 }
 
-   public boolean canAttack(float px, float py) {
-    float distX = Math.abs(px - x);
-    return distX < 60 && attackCooldown == 0;
-}
-
-  // Hapus canSpecial() dan doSpecial() lama, ganti dengan:
 public boolean canMeleeAttack(float px, float py) {
     float distX = Math.abs(px - x);
     return distX < 60 && attackCooldown == 0;
@@ -64,18 +60,9 @@ public boolean canMeleeAttack(float px, float py) {
 
 public int doMeleeAttack() {
     attackCooldown = 70;
+    meleeVisualTimer = 20;
     return attack; // damage penuh
 }
-
-    public int doAttack() {
-        attackCooldown = 70;
-        return attack;
-    }
-
-    public int doSpecial() {
-        specialCooldown = 200;
-        return attack * 2;
-    }
 
     public boolean isEnraged() { return hp < maxHp * 0.3f; }
     
@@ -112,10 +99,15 @@ public int doRangedAttack() {
 //        p.setColor(auraColor);
 //        p.fillOval(cx - 50, cy - 40, 100, 80);
 
-        // Sprite
-        BufferedImage sprite = (enraged || attackCooldown < 40)
-                ? anara.utils.AssetManager.finalBossAttack1
-                : anara.utils.AssetManager.finalBossBasic;
+        // Sprite: serangan jauh (finalBossAttack1), serangan dekat (finalBossAttack2), atau idle
+        BufferedImage sprite;
+        if (meleeVisualTimer > 0) {
+            sprite = anara.utils.AssetManager.finalBossAttack2;
+        } else if (specialVisualTimer > 0 || enraged || attackCooldown < 40) {
+            sprite = anara.utils.AssetManager.finalBossAttack1;
+        } else {
+            sprite = anara.utils.AssetManager.finalBossBasic;
+        }
 
         int spriteW = 200;
         int spriteH = 200;

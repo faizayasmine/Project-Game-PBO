@@ -7,6 +7,8 @@ import java.awt.event.*;
 
 public class StoryScreen extends BasePanel {
 
+    private static final long serialVersionUID = 1L;
+
     private static final String[] SCENES = {
         "cerita1", "cerita2", "cerita3", "cerita4"
     };
@@ -28,28 +30,26 @@ public class StoryScreen extends BasePanel {
     }
 
     private void loadFont() {
-        java.io.File f = new java.io.File(
-            "C:/Users/Iqbal/Project-Game-PBO/src/Assets/font/ari-w9500-condensed-bold.ttf");
-        if (f.exists()) {
-            try {
-                storyFont = Font.createFont(Font.TRUETYPE_FONT, f);
+        try (java.io.InputStream is = getClass().getResourceAsStream(
+                "/assets/font/ari-w9500-condensed-bold.ttf")) {
+            if (is != null) {
+                storyFont = Font.createFont(Font.TRUETYPE_FONT, is);
                 GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(storyFont);
                 return;
-            } catch (Exception ignored) {}
-        }
+            }
+        } catch (Exception ignored) {}
         storyFont = new Font("Serif", Font.BOLD, 14);
     }
 
     private void loadImages() {
         sceneImages = new Image[SCENES.length];
-        String base = "src/Assets/images/story/";
         for (int i = 0; i < SCENES.length; i++) {
-            java.io.File img = new java.io.File(base + SCENES[i] + ".png");
-            if (img.exists()) {
-                sceneImages[i] = new ImageIcon(img.getAbsolutePath()).getImage();
+            java.net.URL url = getClass().getResource("/assets/images/story/" + SCENES[i] + ".png");
+            if (url != null) {
+                sceneImages[i] = new ImageIcon(url).getImage();
                 System.out.println("[StoryScreen] Loaded: " + SCENES[i] + ".png");
             } else {
-                System.err.println("[StoryScreen] NOT FOUND: " + img.getAbsolutePath());
+                System.err.println("[StoryScreen] NOT FOUND: " + SCENES[i] + ".png");
             }
         }
     }

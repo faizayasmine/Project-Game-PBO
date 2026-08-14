@@ -54,7 +54,7 @@ public class AssetManager {
 
         map1Background = load("/assets/images/map1.png");
         beranda = load("/assets/images/tampilan.png");
-        map3Background = load("/assets/images/MAP3.png");
+        map3Background = load("/assets/images/map3.png");
         Shop = load("/assets/images/shop.png");
         senjata1 = load("/assets/images/senjata1.png");
         senjata2 = load("/assets/images/senjata2.png");

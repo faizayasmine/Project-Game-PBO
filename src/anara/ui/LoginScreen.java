@@ -13,6 +13,8 @@ import java.util.List;
 
 public class LoginScreen extends BasePanel {
 
+    private static final long serialVersionUID = 1L;
+
     // ── Warna ─────────────────────────────────────────────────────────────────
     private static final Color COL_GREEN_DARK   = new Color(45, 85, 20);
     private static final Color COL_GREEN_MID    = new Color(80, 145, 40);
@@ -346,10 +348,11 @@ public class LoginScreen extends BasePanel {
             String password = new String(fieldPassword.getPassword()).trim();
             if (userId.isEmpty())   { statusLabel.setText("ID pengguna tidak boleh kosong!"); return; }
             if (username.length()<3){ statusLabel.setText("Username minimal 3 karakter!");    return; }
+            if (!username.matches("[a-zA-Z0-9_]{3,20}")) { statusLabel.setText("Username hanya boleh huruf/angka/underscore!"); return; }
             if (password.length()<4){ statusLabel.setText("Password minimal 4 karakter!");    return; }
             if (SaveManager.playerExists(username)){ statusLabel.setText("Username sudah digunakan!"); return; }
-            PlayerData p = new PlayerData(username);
-            p.setPassword(password);
+            PlayerData p = new PlayerData(userId, username);
+            p.setPassword(SaveManager.hash(password));
             SaveManager.savePlayer(p);
             GameEngine.getInstance().setCurrentPlayer(p);
             GameEngine.getInstance().showScreen(GameEngine.SCREEN_MAIN_MENU);
@@ -379,6 +382,12 @@ public class LoginScreen extends BasePanel {
         animTimer.start();
     }
     public void stopAnimation() { if (animTimer != null) animTimer.stop(); }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        stopAnimation();
+    }
 
     // ── Render ────────────────────────────────────────────────────────────────
     @Override

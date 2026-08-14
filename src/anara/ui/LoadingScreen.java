@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LoadingScreen extends BasePanel {
+
+    private static final long serialVersionUID = 1L;
     private Timer animTimer;
     private int dotCount = 0;
     private float barProgress = 0f;

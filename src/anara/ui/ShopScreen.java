@@ -40,7 +40,7 @@ public class ShopScreen extends BasePanel {
     private static final List<ShopItem> CATALOG_SKILL = new ArrayList<>(Arrays.asList(
         new ShopItem("s1","Quickstrike",  "Kurangi cooldown serangan (+5 SKL)",              100,  5, ShopItem.ItemType.SKILL),
         new ShopItem("s2","Windrage",     "Serangan AoE memutar di sekitar Raka (+15 SKL)",  200, 15, ShopItem.ItemType.SKILL),
-        new ShopItem("s3","Sealbreaker",  "Melepaskan energi Pecahan Segel (+25 SKL)",       350, 25, ShopItem.ItemType.SKILL)
+        new ShopItem("s3","Sealbreaker",  "Melepaskan energi Pecahan Segel (+25 SKL)",       1000, 25, ShopItem.ItemType.SKILL)
     ));
 
    public ShopScreen() {
